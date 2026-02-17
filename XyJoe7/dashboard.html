@@ -418,10 +418,71 @@
         <h3 style="margin:0" id="editorTitle">编辑量表</h3>
         <button class="btn btn-ghost" id="closeEditorBtn">关闭</button>
       </div>
-      <div style="margin-top:14px">
+      
+      <!-- Tabs for switching between metadata form and JSON editor -->
+      <div style="margin-top:14px;border-bottom:1px solid rgba(0,0,0,.1);display:flex;gap:4px">
+        <button class="btn btn-ghost" id="metadataTabBtn" style="border-radius:8px 8px 0 0;border-bottom:2px solid var(--primary)">元数据编辑</button>
+        <button class="btn btn-ghost" id="jsonTabBtn" style="border-radius:8px 8px 0 0">JSON 编辑</button>
+      </div>
+      
+      <!-- Metadata Form Editor -->
+      <div id="metadataFormSection" style="margin-top:14px">
+        <p class="small" style="margin:0 0 10px;line-height:1.6">
+          编辑量表的元数据字段（标题、简介、作答方式、说明与提醒等）。修改后点击"应用到 JSON"将更新 JSON 编辑器内容。
+        </p>
+        
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label class="small">
+            ID *
+            <input id="metaId" style="width:100%;margin-top:4px" placeholder="test-id"/>
+          </label>
+          
+          <label class="small">
+            标题 *
+            <input id="metaTitle" style="width:100%;margin-top:4px" placeholder="测试标题"/>
+          </label>
+          
+          <label class="small">
+            分类 *
+            <input id="metaCategory" style="width:100%;margin-top:4px" placeholder="心理测评"/>
+          </label>
+          
+          <label class="small">
+            简介
+            <textarea id="metaIntro" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;margin-top:4px" placeholder="测试简介"></textarea>
+          </label>
+          
+          <label class="small">
+            标签（逗号分隔）
+            <input id="metaTags" style="width:100%;margin-top:4px" placeholder="标签1, 标签2, 标签3"/>
+          </label>
+          
+          <label class="small">
+            预计时间（分钟）
+            <input id="metaEstimated" type="number" min="1" style="width:100%;margin-top:4px" placeholder="10"/>
+          </label>
+          
+          <hr style="border:none;border-top:1px solid rgba(0,0,0,.08);margin:6px 0"/>
+          <h4 style="margin:6px 0">作答方式（content.howto）</h4>
+          <p class="small" style="margin:0">每行一条建议，自动转换为列表项。留空则使用系统默认。</p>
+          <textarea id="metaHowto" style="width:100%;min-height:100px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px" placeholder="例如：&#10;按最近两周状态作答，更能反映当前压力与情绪变化。&#10;不必追求"好答案"，真实作答更有意义。"></textarea>
+          
+          <h4 style="margin:6px 0">说明与提醒（content.about）</h4>
+          <p class="small" style="margin:0">每行一条说明，自动转换为列表项。留空则使用系统默认。</p>
+          <textarea id="metaAbout" style="width:100%;min-height:100px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px" placeholder="例如：&#10;本结果不替代临床诊断或治疗建议。&#10;若你持续感到痛苦，请及时联系专业机构。"></textarea>
+        </div>
+        
+        <div class="row" style="margin-top:14px;gap:10px">
+          <button class="btn btn-primary" id="applyMetadataBtn">应用到 JSON</button>
+          <button class="btn btn-ghost" id="loadFromJsonBtn">从 JSON 加载</button>
+        </div>
+      </div>
+      
+      <!-- JSON Editor Section -->
+      <div id="jsonEditorSection" style="margin-top:14px;display:none">
         <p class="small" style="margin:0 0 10px;line-height:1.6">
           编辑该量表的完整 JSON 数据。修改后点击"保存"即可更新。<br/>
-          包含字段：id, title, category, tags, intro, estimated, mode, rule, questions
+          包含字段：id, title, category, tags, intro, estimated, mode, rule, questions, content
         </p>
         
         <div style="margin-top:10px">
@@ -805,6 +866,17 @@ async function destroyExpired(){
         const t = j.test;
         $("#testJsonEditor").value = JSON.stringify(t, null, 2);
         $("#editorTitle").textContent = "编辑量表: " + t.id;
+        
+        // Populate metadata form
+        $("#metaId").value = t.id || "";
+        $("#metaTitle").value = t.title || "";
+        $("#metaCategory").value = t.category || "";
+        $("#metaIntro").value = t.intro || "";
+        $("#metaTags").value = (t.tags || []).join(", ");
+        $("#metaEstimated").value = t.estimated || 10;
+        const content = t.content || {};
+        $("#metaHowto").value = (content.howto || []).join('\n');
+        $("#metaAbout").value = (content.about || []).join('\n');
       } else {
         // Create new test with template
         const template = {
@@ -838,7 +910,24 @@ async function destroyExpired(){
         };
         $("#testJsonEditor").value = JSON.stringify(template, null, 2);
         $("#editorTitle").textContent = "新增量表";
+        
+        // Populate metadata form with template
+        $("#metaId").value = template.id;
+        $("#metaTitle").value = template.title;
+        $("#metaCategory").value = template.category;
+        $("#metaIntro").value = template.intro;
+        $("#metaTags").value = template.tags.join(", ");
+        $("#metaEstimated").value = template.estimated;
+        $("#metaHowto").value = "";
+        $("#metaAbout").value = "";
       }
+      
+      // Show metadata tab by default
+      $("#metadataFormSection").style.display = "block";
+      $("#jsonEditorSection").style.display = "none";
+      $("#metadataTabBtn").style.borderBottom = "2px solid var(--primary)";
+      $("#jsonTabBtn").style.borderBottom = "none";
+      
       $("#testEditorOverlay").style.display = "block";
     }
 
@@ -1398,6 +1487,100 @@ async function destroyExpired(){
     $("#addTestBtn")?.addEventListener("click", ()=>openTestEditor(null));
     $("#downloadTemplateBtn")?.addEventListener("click", ()=>downloadTemplate());
     $("#refreshTestsBtn")?.addEventListener("click", ()=>loadTests().catch(e=>toast(e.message||e.error||"刷新失败")));
+    
+    // Test editor tabs
+    $("#metadataTabBtn")?.addEventListener("click", ()=>{
+      $("#metadataFormSection").style.display = "block";
+      $("#jsonEditorSection").style.display = "none";
+      $("#metadataTabBtn").style.borderBottom = "2px solid var(--primary)";
+      $("#jsonTabBtn").style.borderBottom = "none";
+    });
+    $("#jsonTabBtn")?.addEventListener("click", ()=>{
+      $("#metadataFormSection").style.display = "none";
+      $("#jsonEditorSection").style.display = "block";
+      $("#metadataTabBtn").style.borderBottom = "none";
+      $("#jsonTabBtn").style.borderBottom = "2px solid var(--primary)";
+    });
+    
+    // Metadata form handlers
+    $("#applyMetadataBtn")?.addEventListener("click", ()=>{
+      try {
+        // Get current JSON or start with empty object
+        let data = {};
+        const currentJson = $("#testJsonEditor").value.trim();
+        if(currentJson){
+          try {
+            data = JSON.parse(currentJson);
+          } catch(e) {
+            // If JSON is invalid, start fresh
+            data = {};
+          }
+        }
+        
+        // Update from form fields
+        data.id = $("#metaId").value.trim();
+        data.title = $("#metaTitle").value.trim();
+        data.category = $("#metaCategory").value.trim();
+        data.intro = $("#metaIntro").value.trim();
+        data.estimated = parseInt($("#metaEstimated").value) || 10;
+        
+        // Tags
+        const tagsStr = $("#metaTags").value.trim();
+        data.tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+        
+        // Content object
+        if(!data.content) data.content = {};
+        
+        // Howto - split by newlines and filter empty
+        const howtoText = $("#metaHowto").value.trim();
+        data.content.howto = howtoText ? howtoText.split('\n').map(l => l.trim()).filter(l => l) : undefined;
+        
+        // About - split by newlines and filter empty
+        const aboutText = $("#metaAbout").value.trim();
+        data.content.about = aboutText ? aboutText.split('\n').map(l => l.trim()).filter(l => l) : undefined;
+        
+        // Remove empty content
+        if(data.content && Object.keys(data.content).length === 0){
+          delete data.content;
+        }
+        
+        // Update JSON editor
+        $("#testJsonEditor").value = JSON.stringify(data, null, 2);
+        toast("元数据已应用到 JSON");
+      } catch(e) {
+        toast("应用失败：" + e.message);
+      }
+    });
+    
+    $("#loadFromJsonBtn")?.addEventListener("click", ()=>{
+      try {
+        const jsonText = $("#testJsonEditor").value.trim();
+        if(!jsonText){
+          toast("JSON 编辑器为空");
+          return;
+        }
+        
+        const data = JSON.parse(jsonText);
+        
+        // Populate form fields
+        $("#metaId").value = data.id || "";
+        $("#metaTitle").value = data.title || "";
+        $("#metaCategory").value = data.category || "";
+        $("#metaIntro").value = data.intro || "";
+        $("#metaTags").value = (data.tags || []).join(", ");
+        $("#metaEstimated").value = data.estimated || 10;
+        
+        // Content fields
+        const content = data.content || {};
+        $("#metaHowto").value = (content.howto || []).join('\n');
+        $("#metaAbout").value = (content.about || []).join('\n');
+        
+        toast("已从 JSON 加载到表单");
+      } catch(e) {
+        toast("加载失败：" + e.message);
+      }
+    });
+    
     $("#closeEditorBtn")?.addEventListener("click", ()=>{ $("#testEditorOverlay").style.display = "none"; });
     $("#saveTestBtn")?.addEventListener("click", ()=>saveTest().catch(e=>toast(e.message||e.error||"保存失败")));
     $("#formatJsonBtn")?.addEventListener("click", ()=>{

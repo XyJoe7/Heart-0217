@@ -680,7 +680,7 @@
     }
 
     /* ══ My Tab - Permission Management ══ */
-    function fmt(ts){
+    function formatTimestamp(ts){
       if(!ts) return "";
       var d = new Date(ts*1000); 
       var p = n => String(n).padStart(2,'0');
@@ -706,7 +706,7 @@
         var code = auth.data?.code || '当前会话';
         var expStr = "";
         if(auth.exp){
-          expStr = " · 有效至 " + fmt(auth.exp);
+          expStr = " · 有效至 " + formatTimestamp(auth.exp);
         }
         if(statusEl) statusEl.innerHTML = '✅ <b>已激活</b> · 会话：<span style="font-family:monospace;background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px">' + code + '</span>' + expStr;
         if(btnEl){
@@ -734,6 +734,7 @@
     if(activateBtnMain){
       activateBtnMain.addEventListener("click", async function(){
         var code = String(codeInputMain?.value||"").trim();
+        // Normalize various dash characters (em-dash, en-dash, etc.) from copy-paste to standard hyphen
         code = code.replace(/[–—―\s]+/g, "-").toUpperCase();
         if(codeInputMain) codeInputMain.value = code;
         if(!code){ 

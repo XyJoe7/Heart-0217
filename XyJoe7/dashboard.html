@@ -808,11 +808,11 @@ async function destroyExpired(){
       } else {
         // Create new test with template
         const template = {
-          id: "new-test",
-          title: "新测试标题",
+          id: "your-test-id",
+          title: "请输入测试标题",
           category: "心理测评",
           tags: ["测试"],
-          intro: "测试简介",
+          intro: "请输入测试简介",
           estimated: 10,
           mode: "score",
           rule: {
@@ -1320,7 +1320,10 @@ async function destroyExpired(){
     $("#formatJsonBtn")?.addEventListener("click", ()=>{
       try {
         const jsonText = $("#testJsonEditor").value.trim();
-        if (!jsonText) return;
+        if (!jsonText) {
+          toast("请输入 JSON 数据");
+          return;
+        }
         const data = JSON.parse(jsonText);
         $("#testJsonEditor").value = JSON.stringify(data, null, 2);
         toast("JSON 已格式化");

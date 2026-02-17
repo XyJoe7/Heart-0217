@@ -2,6 +2,24 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 
+// Rate limit configuration
+const ADMIN_GENERAL_RATE_LIMIT = 120;
+const ADMIN_LOGIN_RATE_LIMIT = 5;
+const ADMIN_LOGIN_WINDOW = 900; // 15 minutes
+
+// Apply security headers and rate limiting
+Security::addSecurityHeaders();
+
+$ip = ip();
+$rateLimitFile = __DIR__ . '/../data/ratelimit.json';
+Security::loadRateLimitData($rateLimitFile);
+
+// General rate limit for admin endpoint
+if (!Security::checkRateLimit("admin:general:{$ip}", ADMIN_GENERAL_RATE_LIMIT, 60)) {
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'rate_limit_exceeded','message'=>'请求过于频繁'], 429);
+}
+
 require_method('POST');
 $cfg = cfg();
 $in = json_input();
@@ -18,10 +36,31 @@ function admin_auth(array $cfg, array $in): array {
 }
 
 if ($action === 'login') {
-  $password = strval($in['password'] ?? '');
-  if ($password === '' || $password !== strval($cfg['ADMIN_PASSWORD'])) {
-    respond(['ok'=>false,'error'=>'bad_password'], 403);
+  // Rate limit login attempts more strictly
+  $loginKey = "login:admin:{$ip}";
+  
+  if (!Security::checkRateLimit($loginKey, ADMIN_LOGIN_RATE_LIMIT, ADMIN_LOGIN_WINDOW)) {
+    Security::logSecurityEvent('admin_login_rate_limited', ['ip' => $ip]);
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'rate_limit_exceeded','message'=>'登录尝试次数过多，请15分钟后再试'], 429);
   }
+  
+  $password = strval($in['password'] ?? '');
+  if ($password === '') {
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'missing_password','message'=>'请输入密码'], 400);
+  }
+  
+  // Use timing-safe comparison for password
+  if (!Security::timingSafeCompare(strval($cfg['ADMIN_PASSWORD']), $password)) {
+    Security::logSecurityEvent('admin_login_failed', ['ip' => $ip]);
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'bad_password','message'=>'密码错误'], 403);
+  }
+  
+  Security::logSecurityEvent('admin_login_success', ['ip' => $ip]);
+  Security::saveRateLimitData($rateLimitFile);
+  
   $t = now();
   $payload = ['typ'=>'admin','iat'=>$t,'exp'=>$t + 12*3600,'v'=>1];
   $adminToken = sign_token($payload, strval($cfg['SECRET_KEY']));

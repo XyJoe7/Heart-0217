@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
+
+// Apply security headers
+Security::addSecurityHeaders();
+
 $cfg = cfg();
 $path = __DIR__ . '/../data/site.json';
 $data = load_json_file($path);

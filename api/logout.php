@@ -2,6 +2,18 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 
+// Apply security headers and rate limiting
+Security::addSecurityHeaders();
+
+$ip = ip();
+$rateLimitFile = __DIR__ . '/../data/ratelimit.json';
+Security::loadRateLimitData($rateLimitFile);
+
+if (!Security::checkRateLimit("logout:{$ip}", 60, 60)) {
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'rate_limit_exceeded','message'=>'请求过于频繁'], 429);
+}
+
 require_method('POST');
 $cfg = cfg();
 $in = json_input();
@@ -23,4 +35,5 @@ with_lock($lock, function() use ($cfg, $sid){
   return true;
 });
 
+Security::saveRateLimitData($rateLimitFile);
 respond(['ok'=>true]);

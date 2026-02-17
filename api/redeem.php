@@ -2,10 +2,32 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 
+// Configuration constants
+const MAX_CODE_LOG_LENGTH = 20; // Maximum length for logging activation codes
+
+// Apply security headers and rate limiting
+Security::addSecurityHeaders();
+
+$ip = ip();
+$rateLimitFile = __DIR__ . '/../data/ratelimit.json';
+Security::loadRateLimitData($rateLimitFile);
+
+if (!Security::checkRateLimit("redeem:{$ip}", 30, 60)) {
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'rate_limit_exceeded','message'=>'请求过于频繁'], 429);
+}
+
 require_method('POST');
 $cfg = cfg();
 $in = json_input();
 $code = trim(strval($in['code'] ?? ''));
+
+// Validate code format to prevent injection attacks
+if ($code !== '' && !preg_match('/^[A-Z0-9-]+$/i', $code)) {
+    Security::logSecurityEvent('invalid_code_format', ['code' => substr($code, 0, MAX_CODE_LOG_LENGTH), 'ip' => $ip]);
+    Security::saveRateLimitData($rateLimitFile);
+    respond(['ok'=>false,'error'=>'invalid_code_format','message'=>'激活码格式无效'], 400);
+}
 
 if ($code === '') respond(['ok'=>false,'error'=>'empty_code','message'=>'请输入激活码'], 400);
 
@@ -106,6 +128,8 @@ $result = with_lock($lock, function() use ($cfg, $code, $in){
 
   return ['ok'=>true,'token'=>$token,'expiresAt'=>$sessionExp,'grantDays'=>$grantDays];
 });
+
+Security::saveRateLimitData($rateLimitFile);
 
 if (!$result['ok']) respond($result, 403);
 respond($result);

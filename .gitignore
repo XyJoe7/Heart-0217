@@ -2,3 +2,8 @@
 *.swp
 *.swo
 *~
+/api/config.php
+/data/*.json
+/data/*.log
+/data/.lock
+*.tmp

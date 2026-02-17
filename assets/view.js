@@ -485,7 +485,7 @@ function startTest(test, resume, variantId){
           ${answerStatus}
         </div>
         <div class="small" style="margin-top:16px;color:var(--muted)">
-          ✓ 表示已作答，○ 表示未作答。可点击跳转到已答题目或之前的题目。
+          ✓ 表示已作答，○ 表示未作答。可点击跳转到之前的题目。
         </div>
       </div>
     `;
@@ -501,13 +501,13 @@ function startTest(test, resume, variantId){
     document.querySelectorAll("[data-jump]").forEach(btn => {
       btn.addEventListener("click", () => {
         const targetIndex = Number(btn.dataset.jump);
-        // Allow jumping backward or to any answered question
-        if(targetIndex <= index || answers[targetIndex] !== null){
+        // Only allow jumping backward to maintain answer flow integrity
+        if(targetIndex <= index){
           index = targetIndex;
           save();
           renderQ();
         } else {
-          toast("请先完成前面的题目");
+          toast("请按顺序作答");
         }
       });
     });
@@ -521,11 +521,12 @@ function startTest(test, resume, variantId){
     const pctv = Math.round(((index)/Math.max(1,total-1))*100);
     const q = questions[index];
 
-    // Scroll to question panel when starting or navigating
+    // Scroll to question panel when starting or navigating (delay allows DOM update)
+    const SCROLL_DELAY_MS = 100;
     setTimeout(() => {
       const panel = $("#mainPanel");
       if(panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 100);
+    }, SCROLL_DELAY_MS);
 
     const opts = q.opts.map((o, oi) => {
       const checked = answers[index] === oi ? "checked" : "";

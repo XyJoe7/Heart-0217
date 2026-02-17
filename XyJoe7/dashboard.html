@@ -1553,7 +1553,7 @@ async function destroyExpired(){
         }
         
         const peopleCount = parseInt($("#metaPeopleCount").value);
-        if(peopleCount && peopleCount > 0) {
+        if(!isNaN(peopleCount) && peopleCount > 0) {
           data.peopleCount = peopleCount;
         } else {
           delete data.peopleCount;

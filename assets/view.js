@@ -457,6 +457,11 @@ function startTest(test, resume, variantId){
     saveJSON(answersKey, answers);
   }
 
+  /**
+   * Display progress overview modal with answered/unanswered status
+   * Shows clickable question grid allowing backward navigation only
+   * Closure variables: answers, index, total, questions
+   */
   function showProgressOverview(){
     const answered = answers.filter(a => a !== null).length;
     const unanswered = answers.filter(a => a === null).length;
@@ -501,10 +506,13 @@ function startTest(test, resume, variantId){
     document.querySelectorAll("[data-jump]").forEach(btn => {
       btn.addEventListener("click", () => {
         const targetIndex = Number(btn.dataset.jump);
-        // Only allow jumping backward to maintain answer flow integrity
-        if(targetIndex <= index){
+        // Only allow jumping backward (not to current or forward)
+        if(targetIndex < index){
           index = targetIndex;
           save();
+          renderQ();
+        } else if(targetIndex === index){
+          // Already on this question, just dismiss progress view
           renderQ();
         } else {
           toast("请按顺序作答");

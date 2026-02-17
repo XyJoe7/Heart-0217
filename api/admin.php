@@ -199,17 +199,19 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
 
   if ($action === 'updateSiteSettings') {
     $path = __DIR__ . '/../data/site.json';
-    $settings = [
-      'siteName' => trim(strval($in['siteName'] ?? '心象研究所')),
-      'siteSub' => trim(strval($in['siteSub'] ?? '测评 · 性格 · 关系 · 职业')),
-      'icp' => trim(strval($in['icp'] ?? '')),
-      'about' => trim(strval($in['about'] ?? '/about/')),
-      'faq' => trim(strval($in['faq'] ?? '/faq/')),
-      'sitemap' => trim(strval($in['sitemap'] ?? '/sitemap-page/')),
-      'analyticsCode' => strval($in['analyticsCode'] ?? ''),
-    ];
-    save_json_file_atomic($path, $settings);
-    return ['ok'=>true,'settings'=>$settings];
+    $existing = load_json_file($path);
+    if (!is_array($existing)) $existing = [];
+    $existing['siteName'] = trim(strval($in['siteName'] ?? '心象研究所'));
+    $existing['siteSub'] = trim(strval($in['siteSub'] ?? '测评 · 性格 · 关系 · 职业'));
+    $existing['icp'] = trim(strval($in['icp'] ?? ''));
+    $existing['about'] = trim(strval($in['about'] ?? '/about/'));
+    $existing['faq'] = trim(strval($in['faq'] ?? '/faq/'));
+    $existing['sitemap'] = trim(strval($in['sitemap'] ?? '/sitemap-page/'));
+    $existing['analyticsCode'] = strval($in['analyticsCode'] ?? '');
+    $existing['shareQrUrl'] = trim(strval($in['shareQrUrl'] ?? ''));
+    $existing['shareText'] = trim(strval($in['shareText'] ?? ''));
+    save_json_file_atomic($path, $existing);
+    return ['ok'=>true,'settings'=>$existing];
   }
 
   if ($action === 'destroyExpired') {

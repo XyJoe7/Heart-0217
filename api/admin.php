@@ -519,6 +519,54 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
   }
 
   // ═══════════════════════════════════════════
+  // 轮播图管理
+  // ═══════════════════════════════════════════
+  
+  if ($action === 'getCarousel') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $carousel = $siteData['carousel'] ?? [
+      ['bg'=>'linear-gradient(135deg,#4facfe,#00f2fe)','title'=>'专业心理测评平台','sub'=>'涵盖情绪、人格、恋爱、职业等多维度心理自测工具'],
+      ['bg'=>'linear-gradient(135deg,#f093fb,#f5576c)','title'=>'恋爱 · 人格 · 情绪','sub'=>'40+ 科学量表，随时随地测评'],
+      ['bg'=>'linear-gradient(135deg,#667eea,#764ba2)','title'=>'了解自己，才能更好前行','sub'=>'结果仅供自我觉察，请对自己保持善意']
+    ];
+    return ['ok'=>true,'carousel'=>$carousel];
+  }
+
+  if ($action === 'updateCarousel') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $carousel = $in['carousel'] ?? [];
+    $siteData['carousel'] = $carousel;
+    save_json_file_atomic($seoPath, $siteData);
+    return ['ok'=>true];
+  }
+
+  // ═══════════════════════════════════════════
+  // 精选内容管理（热门、新品、推荐）
+  // ═══════════════════════════════════════════
+  
+  if ($action === 'getFeaturedContent') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $featured = $siteData['featured'] ?? [
+      'hot' => ['enabled'=>true,'title'=>'🔥 热门爆款','items'=>[]],
+      'new' => ['enabled'=>true,'title'=>'🆕 新品首发','items'=>[]],
+      'recommended' => ['enabled'=>true,'title'=>'⭐ 精选推荐','items'=>[]]
+    ];
+    return ['ok'=>true,'featured'=>$featured];
+  }
+
+  if ($action === 'updateFeaturedContent') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $featured = $in['featured'] ?? [];
+    $siteData['featured'] = $featured;
+    save_json_file_atomic($seoPath, $siteData);
+    return ['ok'=>true];
+  }
+
+  // ═══════════════════════════════════════════
   // 分析事件记录（用于前端上报）
   // ═══════════════════════════════════════════
 

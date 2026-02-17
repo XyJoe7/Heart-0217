@@ -179,20 +179,38 @@
       </div>
     </section>
 
-    <!-- ── MY ── -->
+    <!-- ── MY / 权限管理 ── -->
     <section id="tabMy" class="tab-page">
       <div class="my-wrap">
         <div style="text-align:center;padding:20px 0">
-          <div class="my-avatar">👤</div>
-          <div style="font-weight:900;font-size:18px" id="myStatusTitle">未激活</div>
-          <div style="color:var(--muted);font-size:13px;margin-top:4px" id="myStatusSub">激活后即可使用全部测评</div>
+          <div class="my-avatar">🔐</div>
+          <div style="font-weight:900;font-size:18px">权限管理</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px">激活权限即可使用全部测评</div>
         </div>
 
-        <div class="my-card" id="myAuthCard">
-          <h4>权限状态</h4>
-          <div id="myAuthInfo" style="color:var(--muted);font-size:13px;line-height:1.7">检查中…</div>
-          <div style="margin-top:12px">
-            <a class="go" href="/code" id="myActivateBtn">激活权限</a>
+        <div class="my-card">
+          <h4>激活权限</h4>
+          <div style="color:var(--muted);font-size:13px;margin-bottom:12px">输入你的激活码以解锁测评。激活信息仅保存在本设备浏览器中，可随时清除。</div>
+          
+          <div id="permStatusDisplay" style="margin-bottom:12px;padding:10px;background:rgba(124,131,253,.08);border-radius:12px;font-size:13px">
+            <div id="permStatus">检查中…</div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <input id="codeInputMain" type="text" placeholder="例如：H-ABCD-EF23-GHJK-LMNP"
+              style="flex:1 1 220px;border-radius:999px;border:1px solid rgba(0,0,0,.12);padding:12px 14px;outline:none;background:rgba(255,255,255,.85);font-size:14px" />
+            <button class="btn btn-primary" id="activateBtnMain" type="button">立即激活</button>
+          </div>
+
+          <div style="color:var(--muted);font-size:12px;line-height:1.6">
+            <b style="color:var(--text)">温馨提示</b><br/>
+            • 一般在购买说明内会标注有效期<br/>
+            • 可随时退出当前设备登录<br/>
+            • 激活成功后立即生效
+          </div>
+
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,.08)">
+            <button class="btn btn-ghost" id="clearBtnMain" type="button" style="width:100%">退出当前设备登录</button>
           </div>
         </div>
 
@@ -661,31 +679,97 @@
       });
     }
 
-    /* ══ My Tab ══ */
+    /* ══ My Tab - Permission Management ══ */
+    function fmt(ts){
+      if(!ts) return "";
+      var d = new Date(ts*1000); 
+      var p = n => String(n).padStart(2,'0');
+      return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+    }
+
+    function toast(msg){
+      var el = document.createElement("div");
+      el.textContent = msg;
+      el.style.cssText = "position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9999;background:rgba(10,10,10,.88);color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;max-width:92vw";
+      document.body.appendChild(el);
+      setTimeout(function(){el.remove()}, 1800);
+    }
+
     function renderMyTab(){
-      var titleEl=document.getElementById("myStatusTitle");
-      var subEl=document.getElementById("myStatusSub");
-      var infoEl=document.getElementById("myAuthInfo");
-      var activateBtn=document.getElementById("myActivateBtn");
+      var statusEl = document.getElementById("permStatus");
+      var inputEl = document.getElementById("codeInputMain");
+      var btnEl = document.getElementById("activateBtnMain");
+      var clearBtnEl = document.getElementById("clearBtnMain");
+
       if(isAuthed()){
-        var auth=window.Auth.getAuth();
-        if(titleEl)titleEl.textContent="已激活 ✅";
-        if(subEl)subEl.textContent="你可以使用所有测评功能";
-        if(infoEl){
-          var expStr="";
-          if(auth.exp){
-            var d=new Date(auth.exp*1000);
-            expStr="有效期至 "+d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
-          }
-          infoEl.textContent=expStr||"权限已激活";
+        var auth = window.Auth.getAuth();
+        var code = auth.data?.code || '当前会话';
+        var expStr = "";
+        if(auth.exp){
+          expStr = " · 有效至 " + fmt(auth.exp);
         }
-        if(activateBtn){activateBtn.textContent="查看权限状态"}
+        if(statusEl) statusEl.innerHTML = '✅ <b>已激活</b> · 会话：<span style="font-family:monospace;background:rgba(0,0,0,.05);padding:2px 6px;border-radius:4px">' + code + '</span>' + expStr;
+        if(btnEl){
+          btnEl.textContent = "已激活";
+          btnEl.disabled = true;
+        }
+        if(inputEl) inputEl.disabled = true;
+        if(clearBtnEl) clearBtnEl.style.display = "";
       }else{
-        if(titleEl)titleEl.textContent="未激活";
-        if(subEl)subEl.textContent="激活后即可使用全部测评";
-        if(infoEl)infoEl.textContent="你当前尚未激活权限，请输入激活码开始使用。";
-        if(activateBtn){activateBtn.textContent="激活权限"}
+        if(statusEl) statusEl.innerHTML = '⚠️ <b>未激活</b> · 请输入激活码以解锁全部测评';
+        if(btnEl){
+          btnEl.textContent = "立即激活";
+          btnEl.disabled = false;
+        }
+        if(inputEl) inputEl.disabled = false;
+        if(clearBtnEl) clearBtnEl.style.display = "";
       }
+    }
+
+    /* ══ Permission Activation Logic ══ */
+    var activateBtnMain = document.getElementById("activateBtnMain");
+    var clearBtnMain = document.getElementById("clearBtnMain");
+    var codeInputMain = document.getElementById("codeInputMain");
+
+    if(activateBtnMain){
+      activateBtnMain.addEventListener("click", async function(){
+        var code = String(codeInputMain?.value||"").trim();
+        code = code.replace(/[–—―\s]+/g, "-").toUpperCase();
+        if(codeInputMain) codeInputMain.value = code;
+        if(!code){ 
+          toast("请输入激活码"); 
+          if(codeInputMain) codeInputMain.focus(); 
+          return; 
+        }
+        activateBtnMain.disabled = true; 
+        activateBtnMain.textContent = "处理中…";
+        try{
+          var res = await window.Auth.redeem(code);
+          if(!res.ok){
+            var errMsg = res.data?.message || res.data?.error || "激活失败";
+            toast(errMsg);
+            activateBtnMain.disabled = false;
+            activateBtnMain.textContent = "立即激活";
+            return;
+          }
+          toast("激活成功！");
+          renderMyTab();
+        }catch(e){
+          toast("网络异常，请稍后重试");
+          activateBtnMain.disabled = false;
+          activateBtnMain.textContent = "立即激活";
+        }
+      });
+    }
+
+    if(clearBtnMain){
+      clearBtnMain.addEventListener("click", function(){
+        if(confirm("确定要退出登录吗？")){
+          window.Auth.clearAuth();
+          toast("已退出登录");
+          renderMyTab();
+        }
+      });
     }
 
     /* ══ Init ══ */

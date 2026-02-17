@@ -240,12 +240,26 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $tests = load_json_file($testsFile);
     if (!is_array($tests) || !isset($tests[0])) $tests = [];
     $items = array_map(function($t){
+      // Count base questions
+      $baseQuestions = count($t['questions'] ?? []);
+      
+      // Get max question count from variants if any
+      $variantQuestions = 0;
+      if (isset($t['variants']) && is_array($t['variants']) && !empty($t['variants'])) {
+        $variantQuestions = max(array_map(function($v) {
+          return count($v['questions'] ?? []);
+        }, $t['variants']));
+      }
+      
+      // Use the higher count (variants or base)
+      $questionCount = max($baseQuestions, $variantQuestions);
+      
       return [
         'id' => $t['id'] ?? '',
         'title' => $t['title'] ?? '',
         'category' => $t['category'] ?? '',
         'tags' => $t['tags'] ?? [],
-        'questionCount' => count($t['questions'] ?? []),
+        'questionCount' => $questionCount,
         'estimated' => $t['estimated'] ?? 0,
       ];
     }, $tests);
@@ -369,6 +383,15 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     save_json_file_atomic($testsFile, $tests);
     rebuild_tests_js($testsFile);
     return ['ok'=>true,'imported'=>$id,'updated'=>$found];
+  }
+
+  if ($action === 'getTestTemplate') {
+    $templateFile = __DIR__ . '/../data/test_import_template.json';
+    if (!file_exists($templateFile)) {
+      return ['ok'=>false,'error'=>'template_not_found'];
+    }
+    $template = load_json_file($templateFile);
+    return ['ok'=>true,'template'=>$template];
   }
 
   // ═══════════════════════════════════════════

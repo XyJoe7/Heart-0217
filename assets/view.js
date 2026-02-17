@@ -57,22 +57,27 @@ function renderInfoPanels(test){
   };
 
   let typesHtml = "";
-  if(test.mode === "animal" && Array.isArray(c.types)){
-    typesHtml = `
-      <details class="details">
-        <summary>动物类型预览 <span class="small">（点击展开）</span></summary>
-        <div class="details-b">
-          <div class="type-grid">
-            ${c.types.map(t => `
-              <div class="type-card">
-                <div class="h"><div class="name">${escapeHtml(t.icon||"")} ${escapeHtml(t.name||"")}</div></div>
-                <div class="tag">${escapeHtml(t.tagline||"")}</div>
-              </div>
-            `).join("")}
+  if(test.mode === "animal"){
+    // Check rule.types first (new location), then content.types (old location) for backwards compatibility
+    const types = (test.rule && test.rule.types) ? test.rule.types :
+                  (c.types && Array.isArray(c.types)) ? c.types : [];
+    if(types.length > 0){
+      typesHtml = `
+        <details class="details">
+          <summary>动物类型预览 <span class="small">（点击展开）</span></summary>
+          <div class="details-b">
+            <div class="type-grid">
+              ${types.map(t => `
+                <div class="type-card">
+                  <div class="h"><div class="name">${escapeHtml(t.icon||"")} ${escapeHtml(t.name||"")}</div></div>
+                  <div class="tag">${escapeHtml(t.tagline||"")}</div>
+                </div>
+              `).join("")}
+            </div>
           </div>
-        </div>
-      </details>
-    `;
+        </details>
+      `;
+    }
   }
 
   return `
@@ -579,7 +584,9 @@ function compute(test, answers, ctx){
     const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
     const main = sorted[0]?.[0] || "cat";
     const sub = sorted[1]?.[0] || sorted[0]?.[0] || "dog";
-    const types = (test.content && test.content.types) ? test.content.types : [];
+    // Check rule.types first (new location), then content.types (old location) for backwards compatibility
+    const types = (test.rule && test.rule.types) ? test.rule.types : 
+                  (test.content && test.content.types) ? test.content.types : [];
     const mainInfo = types.find(x=>x.key===main) || types[0];
     const subInfo = types.find(x=>x.key===sub) || types[1] || types[0];
 

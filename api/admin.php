@@ -243,15 +243,12 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
       // Count base questions
       $baseQuestions = count($t['questions'] ?? []);
       
-      // If there are variants, get the max question count from variants
+      // Get max question count from variants if any
       $variantQuestions = 0;
-      if (isset($t['variants']) && is_array($t['variants'])) {
-        foreach ($t['variants'] as $v) {
-          $count = count($v['questions'] ?? []);
-          if ($count > $variantQuestions) {
-            $variantQuestions = $count;
-          }
-        }
+      if (isset($t['variants']) && is_array($t['variants']) && !empty($t['variants'])) {
+        $variantQuestions = max(array_map(function($v) {
+          return count($v['questions'] ?? []);
+        }, $t['variants']));
       }
       
       // Use the higher count (variants or base)

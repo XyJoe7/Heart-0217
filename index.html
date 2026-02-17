@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>心象研究所</title>
+  <meta name="description" content="专业心理测评平台 — 涵盖情绪、人格、恋爱、职业等多维度心理自测工具。" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="/" />
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/pages.css" />
+  <style>
+    /* ====== Home-specific layout ====== */
+    body{padding-bottom:68px}
+
+    /* ── Shared top bar ── */
+    .top-bar{position:sticky;top:0;z-index:20;backdrop-filter:saturate(160%) blur(10px);background:rgba(253,239,249,.55);border-bottom:1px solid rgba(0,0,0,.06);padding:10px 16px}
+    .top-bar-inner{display:flex;align-items:center;gap:12px;max-width:1100px;margin:0 auto}
+    .top-bar .logo-sm{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--accent));box-shadow:0 6px 16px rgba(255,107,157,.18);flex:0 0 auto;position:relative}
+    .top-bar .logo-sm::after{content:"";position:absolute;inset:7px;border-radius:7px;background:rgba(255,255,255,.6);mix-blend-mode:overlay}
+    .top-bar .search-bar{flex:1;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.8);border:1px solid rgba(0,0,0,.06);border-radius:999px;padding:8px 14px}
+    .top-bar .search-bar svg{width:16px;height:16px;opacity:.55;flex:0 0 auto}
+    .top-bar .search-bar input{border:0;outline:0;background:transparent;width:100%;font-size:14px}
+    .top-bar .search-bar:focus-within{box-shadow:var(--ring);border-color:rgba(124,131,253,.3)}
+
+    /* ── Tab Content Area ── */
+    .tab-page{display:none;position:relative;z-index:5}
+    .tab-page.active{display:block}
+
+    /* ── Bottom navigation ── */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:saturate(160%) blur(10px);border-top:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-around;align-items:center;padding:6px 0 env(safe-area-inset-bottom,6px);box-shadow:0 -4px 16px rgba(0,0,0,.04)}
+    .bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:700;padding:4px 16px;border-radius:8px;transition:.18s ease;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}
+    .bottom-nav a svg{width:22px;height:22px}
+    .bottom-nav a.active{color:var(--primary)}
+    .bottom-nav a.active svg{stroke:var(--primary)}
+
+    /* ── Carousel ── */
+    .carousel{position:relative;overflow:hidden;border-radius:var(--radius);margin-bottom:18px}
+    .carousel-track{display:flex;transition:transform .4s ease}
+    .carousel-slide{min-width:100%;aspect-ratio:2.4/1;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;position:relative;overflow:hidden}
+    .carousel-slide .slide-text{position:relative;z-index:2;text-align:center}
+    .carousel-slide .slide-text h2{margin:0 0 6px;font-size:clamp(18px,3vw,28px);text-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .carousel-slide .slide-text p{margin:0;font-size:clamp(12px,1.8vw,16px);opacity:.9}
+    .carousel-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:3}
+    .carousel-dots span{width:8px;height:8px;border-radius:999px;background:rgba(255,255,255,.45);cursor:pointer;transition:.18s ease}
+    .carousel-dots span.active{background:#fff;width:20px}
+
+    /* ── Section titles ── */
+    .sec-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px}
+    .sec-head h3{margin:0;font-size:17px;display:flex;align-items:center;gap:6px}
+    .sec-head .more{color:var(--muted);font-size:13px;text-decoration:none;font-weight:700}
+
+    /* ── Category quick links ── */
+    .cat-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .cat-row::-webkit-scrollbar{display:none}
+    .cat-item{display:flex;flex-direction:column;align-items:center;gap:6px;text-decoration:none;color:var(--text);min-width:68px;flex:0 0 auto;cursor:pointer;-webkit-tap-highlight-color:transparent}
+    .cat-icon{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:22px;background:rgba(255,255,255,.85);border:1px solid rgba(0,0,0,.06);box-shadow:0 4px 12px rgba(0,0,0,.05);transition:.18s ease}
+    .cat-item:hover .cat-icon{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .cat-item span{font-size:12px;font-weight:700;white-space:nowrap}
+
+    /* ── Horizontal scroll row ── */
+    .scroll-row{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+    .scroll-row::-webkit-scrollbar{display:none}
+    .h-card{flex:0 0 auto;width:150px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06);overflow:hidden;text-decoration:none;color:var(--text);transition:.18s ease;cursor:pointer}
+    .h-card:hover{transform:translateY(-4px);box-shadow:var(--shadow2)}
+    .h-card-img{height:100px;display:flex;align-items:center;justify-content:center;font-size:32px;position:relative;overflow:hidden}
+    .h-card-body{padding:10px}
+    .h-card-body .name{font-weight:900;font-size:13px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+    /* ── New arrivals grid ── */
+    .new-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+    .n-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06);overflow:hidden;text-decoration:none;color:var(--text);transition:.18s ease;cursor:pointer}
+    .n-card:hover{transform:translateY(-4px);box-shadow:var(--shadow2)}
+    .n-card-img{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative;overflow:hidden}
+    .n-card-body{padding:8px 10px}
+    .n-card-body .name{font-weight:900;font-size:12px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    @media(max-width:560px){.new-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+    /* ── Featured list (vertical) ── */
+    .feat-list{display:flex;flex-direction:column;gap:12px}
+    .feat-card{display:flex;gap:12px;background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06);padding:12px;transition:.18s ease;text-decoration:none;color:var(--text);cursor:pointer}
+    .feat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow2)}
+    .feat-card-img{width:80px;height:80px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;flex:0 0 auto;position:relative;overflow:hidden}
+    .feat-card-body{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+    .feat-card-body .question{font-size:12px;color:var(--accent);font-weight:700;margin-bottom:4px;padding:0;background:none;border:none;border-radius:0}
+    .feat-card-body .name{font-weight:900;font-size:14px;line-height:1.35}
+    .feat-card-body .meta-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}
+    .feat-card-body .meta-row .people{display:flex;align-items:center;gap:3px}
+
+    .view-more-btn{display:block;width:100%;padding:14px;border:1px solid rgba(0,0,0,.08);border-radius:999px;background:rgba(255,255,255,.8);text-align:center;font-weight:900;font-size:14px;color:var(--primary2);cursor:pointer;transition:.18s ease;text-decoration:none;margin:22px 0 10px}
+    .view-more-btn:hover{background:rgba(255,255,255,1);box-shadow:var(--shadow)}
+
+    /* ── Category page ── */
+    .cat-layout{display:flex;gap:14px;min-height:60vh}
+    .cat-sidebar{width:100px;flex:0 0 auto;display:flex;flex-direction:column;gap:2px;background:rgba(255,255,255,.65);border-radius:var(--radius);padding:8px;overflow-y:auto;max-height:calc(100vh - 180px);position:sticky;top:70px}
+    .cat-sidebar button{border:0;background:transparent;padding:10px 8px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;text-align:center;transition:.16s ease;color:#555}
+    .cat-sidebar button.active{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;box-shadow:0 6px 16px rgba(124,131,253,.18)}
+    .cat-sidebar button:hover:not(.active){background:rgba(124,131,253,.08)}
+    .cat-main{flex:1;min-width:0}
+    .sort-bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+    .sort-btn{border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.75);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:12px;font-weight:700;transition:.16s ease;color:#555}
+    .sort-btn.active{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border-color:transparent}
+    .cat-list{display:flex;flex-direction:column;gap:12px}
+
+    @media(max-width:640px){
+      .cat-sidebar{width:80px;font-size:12px}
+      .cat-sidebar button{padding:8px 4px;font-size:12px}
+    }
+
+    /* ── My page ── */
+    .my-wrap{max-width:560px;margin:0 auto;padding:20px 0}
+    .my-avatar{width:64px;height:64px;border-radius:999px;background:linear-gradient(135deg,var(--primary),var(--accent));display:grid;place-items:center;color:#fff;font-size:28px;margin:0 auto 12px}
+    .my-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.06);padding:16px;margin-bottom:12px}
+    .my-card h4{margin:0 0 10px;font-size:15px}
+    .my-links{display:flex;flex-direction:column;gap:8px}
+    .my-link{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.06);background:rgba(255,255,255,.8);text-decoration:none;color:var(--text);font-weight:700;font-size:14px;transition:.16s ease}
+    .my-link:hover{background:#fff;box-shadow:var(--shadow)}
+    .my-link svg{width:20px;height:20px;opacity:.65}
+  </style>
+  <script src="/assets/auth.js"></script>
+  <script src="/assets/tests.js"></script>
+</head>
+<body>
+  <div class="floating-bubbles" aria-hidden="true" id="bubbles"></div>
+
+  <!-- ═══ Top Bar ═══ -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <a href="/" style="text-decoration:none;display:flex;align-items:center;gap:8px">
+        <span class="logo-sm" aria-hidden="true"></span>
+        <span style="font-weight:900;font-size:15px;white-space:nowrap" id="brandName">心象研究所</span>
+      </a>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" id="globalSearch" placeholder="搜索测评…" autocomplete="off" />
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ Tab Pages ═══ -->
+  <main class="container" style="padding-top:14px;padding-bottom:12px">
+
+    <!-- ── HOME ── -->
+    <section id="tabHome" class="tab-page active">
+      <!-- Carousel -->
+      <div class="carousel" id="carousel">
+        <div class="carousel-track" id="carouselTrack"></div>
+        <div class="carousel-dots" id="carouselDots"></div>
+      </div>
+
+      <!-- Category quick links -->
+      <div class="sec-head"><h3>📂 分类</h3><a class="more" href="javascript:void(0)" id="catMore">全部 &rsaquo;</a></div>
+      <div class="cat-row" id="catRow"></div>
+
+      <!-- Hot items -->
+      <div class="sec-head"><h3>🔥 热门爆款</h3></div>
+      <div class="scroll-row" id="hotRow"></div>
+
+      <!-- New arrivals -->
+      <div class="sec-head"><h3>🆕 新品首发</h3></div>
+      <div class="new-grid" id="newGrid"></div>
+
+      <!-- Featured recommendations -->
+      <div class="sec-head"><h3>⭐ 精选推荐</h3></div>
+      <div class="feat-list" id="featList"></div>
+
+      <!-- View More -->
+      <a class="view-more-btn" href="javascript:void(0)" id="viewMoreBtn">查看更多 &rsaquo;</a>
+    </section>
+
+    <!-- ── CATEGORY ── -->
+    <section id="tabCategory" class="tab-page">
+      <div class="cat-layout">
+        <aside class="cat-sidebar" id="catSidebar"></aside>
+        <div class="cat-main">
+          <div class="sort-bar" id="sortBar"></div>
+          <div class="cat-list" id="catList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── MY ── -->
+    <section id="tabMy" class="tab-page">
+      <div class="my-wrap">
+        <div style="text-align:center;padding:20px 0">
+          <div class="my-avatar">👤</div>
+          <div style="font-weight:900;font-size:18px" id="myStatusTitle">未激活</div>
+          <div style="color:var(--muted);font-size:13px;margin-top:4px" id="myStatusSub">激活后即可使用全部测评</div>
+        </div>
+
+        <div class="my-card" id="myAuthCard">
+          <h4>权限状态</h4>
+          <div id="myAuthInfo" style="color:var(--muted);font-size:13px;line-height:1.7">检查中…</div>
+          <div style="margin-top:12px">
+            <a class="go" href="/code" id="myActivateBtn">激活权限</a>
+          </div>
+        </div>
+
+        <div class="my-card">
+          <h4>快捷入口</h4>
+          <div class="my-links">
+            <a class="my-link" href="/about/">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              关于本站
+            </a>
+            <a class="my-link" href="/faq/">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              常见问题
+            </a>
+            <a class="my-link" href="/cooperate/">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              合作联系
+            </a>
+            <a class="my-link" href="/legal/terms/">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              用户协议
+            </a>
+            <a class="my-link" href="/legal/privacy/">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              隐私说明
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══ Footer ═══ -->
+  <footer class="site-footer-block" style="margin-bottom:60px">
+    <div class="links">
+      <a href="/about/">关于本站</a><a href="/faq/">常见问题</a><a href="/sitemap-page/">网站地图</a><a href="/legal/terms/">用户协议</a><a href="/legal/privacy/">隐私说明</a>
+    </div>
+    <div class="record">
+      <span id="icpText">ICP备案号待填写</span>
+    </div>
+  </footer>
+
+  <!-- ═══ Bottom Nav ═══ -->
+  <nav class="bottom-nav" id="bottomNav">
+    <a data-tab="home" class="active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      首页
+    </a>
+    <a data-tab="category">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      分类
+    </a>
+    <a data-tab="my">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      我的
+    </a>
+  </nav>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+  /* ═══════════════════════════════════════════════
+     Home Page Logic
+     ═══════════════════════════════════════════════ */
+  (function(){
+    "use strict";
+
+    /* ── Helpers ── */
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]);
+    }
+    function $(sel,el){return(el||document).querySelector(sel)}
+    function $$(sel,el){return Array.from((el||document).querySelectorAll(sel))}
+    function viewPath(id){return "/view/"+encodeURIComponent(id)+"/"}
+    function isAuthed(){return !!(window.Auth&&window.Auth.getAuth&&window.Auth.getAuth().ok)}
+
+    /* Deterministic "people tested" count from test ID */
+    function peopleTested(id){
+      var h=0;for(var i=0;i<id.length;i++){h=((h<<5)-h)+id.charCodeAt(i);h|=0}
+      return Math.abs(h%8000)+1200;
+    }
+
+    /* Category icon map */
+    var CAT_ICONS={"情绪量表":"💙","人格性格":"🧩","恋爱关系":"❤️","自我探索":"🔍","职业天赋":"💼","趣味外貌":"✨"};
+    /* Category gradient map for card images */
+    var CAT_GRADIENTS={
+      "情绪量表":"linear-gradient(135deg,#667eea,#764ba2)",
+      "人格性格":"linear-gradient(135deg,#f093fb,#f5576c)",
+      "恋爱关系":"linear-gradient(135deg,#ff9a9e,#fad0c4)",
+      "自我探索":"linear-gradient(135deg,#a18cd1,#fbc2eb)",
+      "职业天赋":"linear-gradient(135deg,#ffecd2,#fcb69f)",
+      "趣味外貌":"linear-gradient(135deg,#89f7fe,#66a6ff)"
+    };
+
+    var categories=[];
+    var catSet={};
+    if(typeof TESTS!=="undefined"){
+      TESTS.forEach(function(t){
+        if(t.category&&!catSet[t.category]){catSet[t.category]=true;categories.push(t.category)}
+      });
+    }
+
+    /* ══ Site Settings ══ */
+    function loadSiteSettings(){
+      fetch("/api/site_public.php").then(function(r){return r.json()}).then(function(j){
+        if(!j.ok)return;
+        var s=j.settings;
+        if(s.siteName){
+          var el=document.getElementById("brandName");if(el)el.textContent=s.siteName;
+          document.title=s.siteName;
+        }
+        var icp=document.getElementById("icpText");if(icp&&s.icp)icp.textContent=s.icp;
+        /* Analytics */
+        if(s.analyticsCode&&!window.__siteAnalyticsApplied){
+          window.__siteAnalyticsApplied=true;
+          var host=document.createElement("div");host.style.display="none";host.innerHTML=String(s.analyticsCode);
+          var scripts=host.querySelectorAll("script");
+          scripts.forEach(function(old){
+            var ns=document.createElement("script");
+            for(var a of old.attributes)ns.setAttribute(a.name,a.value);
+            if(old.textContent)ns.textContent=old.textContent;
+            document.body.appendChild(ns);
+          });
+        }
+      }).catch(function(){});
+    }
+
+    /* ══ Bubbles ══ */
+    function setupBubbles(){
+      var host=document.getElementById("bubbles");if(!host)return;
+      var frag=document.createDocumentFragment();
+      for(var i=0;i<14;i++){
+        var b=document.createElement("div");b.className="bubble";
+        var sz=22+Math.random()*60;
+        b.style.width=sz.toFixed(1)+"px";b.style.height=sz.toFixed(1)+"px";
+        b.style.left=(Math.random()*100).toFixed(4)+"%";
+        b.style.animationDelay=(Math.random()*5).toFixed(3)+"s";
+        b.style.animationDuration=(10+Math.random()*10).toFixed(3)+"s";
+        frag.appendChild(b);
+      }
+      host.appendChild(frag);
+    }
+
+    /* ══ Tab Switching ══ */
+    var currentTab="home";
+    function switchTab(tab){
+      currentTab=tab;
+      $$(".tab-page").forEach(function(p){p.classList.remove("active")});
+      var target=document.getElementById("tabHome");
+      if(tab==="category")target=document.getElementById("tabCategory");
+      else if(tab==="my")target=document.getElementById("tabMy");
+      if(target)target.classList.add("active");
+      $$("#bottomNav a").forEach(function(a){
+        a.classList.toggle("active",a.dataset.tab===tab);
+      });
+      /* Restore scroll */
+      window.scrollTo(0,0);
+    }
+
+    $$("#bottomNav a").forEach(function(a){
+      a.addEventListener("click",function(e){
+        e.preventDefault();
+        switchTab(a.dataset.tab);
+      });
+    });
+
+    /* ══ Carousel ══ */
+    var slides=[
+      {bg:"linear-gradient(135deg,#7c83fd,#ff6b9d)",title:"探索你的内心世界",sub:"专业心理测评，多维度自我认知"},
+      {bg:"linear-gradient(135deg,#f093fb,#f5576c)",title:"恋爱 · 人格 · 情绪",sub:"40+ 科学量表，随时随地测评"},
+      {bg:"linear-gradient(135deg,#667eea,#764ba2)",title:"了解自己，才能更好前行",sub:"结果仅供自我觉察，请对自己保持善意"}
+    ];
+    var curSlide=0;var slideTimer=null;
+    function renderCarousel(){
+      var track=document.getElementById("carouselTrack");
+      var dots=document.getElementById("carouselDots");
+      if(!track||!dots)return;
+      track.innerHTML=slides.map(function(s){
+        return '<div class="carousel-slide" style="background:'+s.bg+'"><div class="slide-text"><h2>'+escapeHtml(s.title)+'</h2><p>'+escapeHtml(s.sub)+'</p></div></div>';
+      }).join("");
+      dots.innerHTML=slides.map(function(_,i){
+        return '<span data-i="'+i+'"'+(i===0?' class="active"':'')+' ></span>';
+      }).join("");
+      dots.addEventListener("click",function(e){
+        var sp=e.target.closest("span[data-i]");
+        if(!sp)return;
+        goSlide(Number(sp.dataset.i));
+      });
+      startSlideTimer();
+    }
+    function goSlide(i){
+      curSlide=i;
+      var track=document.getElementById("carouselTrack");
+      if(track)track.style.transform="translateX(-"+i*100+"%)";
+      $$("#carouselDots span").forEach(function(d,idx){d.classList.toggle("active",idx===i)});
+    }
+    function nextSlide(){curSlide=(curSlide+1)%slides.length;goSlide(curSlide)}
+    function startSlideTimer(){clearInterval(slideTimer);slideTimer=setInterval(nextSlide,4000)}
+
+    /* ══ Category Quick Links ══ */
+    function renderCatRow(){
+      var el=document.getElementById("catRow");if(!el)return;
+      el.innerHTML=categories.map(function(c){
+        return '<a class="cat-item" data-cat="'+escapeHtml(c)+'"><div class="cat-icon">'+(CAT_ICONS[c]||"📋")+'</div><span>'+escapeHtml(c)+'</span></a>';
+      }).join("");
+      el.addEventListener("click",function(e){
+        var item=e.target.closest(".cat-item[data-cat]");
+        if(!item)return;
+        e.preventDefault();
+        switchTab("category");
+        setCatFilter(item.dataset.cat);
+      });
+    }
+
+    /* ══ Hot Items (by tags "热门" or first 6 by variety) ══ */
+    function getHotTests(){
+      var hot=TESTS.filter(function(t){return(t.tags||[]).some(function(tg){return tg==="热门"||tg==="综合"||tg==="趣味"})});
+      if(hot.length<4){
+        /* Fallback: pick from various categories */
+        var picked={};
+        TESTS.forEach(function(t){
+          if(!picked[t.category]){picked[t.category]=t}
+        });
+        hot=Object.values(picked);
+      }
+      return hot.slice(0,8);
+    }
+    function renderHotRow(){
+      var el=document.getElementById("hotRow");if(!el)return;
+      var hot=getHotTests();
+      el.innerHTML=hot.map(function(t){
+        var bg=CAT_GRADIENTS[t.category]||"linear-gradient(135deg,#ccc,#eee)";
+        return '<a class="h-card" href="'+escapeHtml(viewPath(t.id))+'"><div class="h-card-img" style="background:'+bg+'"><span style="font-size:28px;filter:brightness(0) invert(1);opacity:.45;position:absolute">'+escapeHtml((t.tags||[])[0]||"测")+'</span></div><div class="h-card-body"><div class="name">'+escapeHtml(t.title)+'</div></div></a>';
+      }).join("");
+    }
+
+    /* ══ New Arrivals (last N added) ══ */
+    function renderNewGrid(){
+      var el=document.getElementById("newGrid");if(!el)return;
+      /* Pick last 6 from the TESTS array (assumed newest) */
+      var items=TESTS.slice(-6).reverse();
+      el.innerHTML=items.map(function(t){
+        var bg=CAT_GRADIENTS[t.category]||"linear-gradient(135deg,#ccc,#eee)";
+        return '<a class="n-card" href="'+escapeHtml(viewPath(t.id))+'"><div class="n-card-img" style="background:'+bg+'"><span style="color:rgba(255,255,255,.6);font-size:22px">'+(CAT_ICONS[t.category]||"📋")+'</span></div><div class="n-card-body"><div class="name">'+escapeHtml(t.title)+'</div></div></a>';
+      }).join("");
+    }
+
+    /* ══ Featured Recommendations ══ */
+    var featPage=0;var FEAT_PER=6;
+    function renderFeatList(){
+      var el=document.getElementById("featList");if(!el)return;
+      var start=0;var end=Math.min((featPage+1)*FEAT_PER,TESTS.length);
+      var items=TESTS.slice(start,end);
+      el.innerHTML=items.map(function(t){
+        var bg=CAT_GRADIENTS[t.category]||"linear-gradient(135deg,#ccc,#eee)";
+        var q=(t.intro||"").split("，")[0]||"你了解自己吗？";
+        var count=peopleTested(t.id);
+        return '<a class="feat-card" href="'+escapeHtml(viewPath(t.id))+'"><div class="feat-card-img" style="background:'+bg+'"><span style="color:rgba(255,255,255,.65);font-size:22px">'+(CAT_ICONS[t.category]||"📋")+'</span></div><div class="feat-card-body"><div class="question">'+escapeHtml(q)+'</div><div class="name">'+escapeHtml(t.title)+'</div><div class="meta-row"><span class="people">👥 '+count+' 人测过</span><span>约 '+escapeHtml(String(t.estimated||3))+' 分钟</span></div></div></a>';
+      }).join("");
+    }
+
+    /* View More button */
+    var vmBtn=document.getElementById("viewMoreBtn");
+    if(vmBtn){
+      vmBtn.addEventListener("click",function(e){
+        e.preventDefault();
+        if((featPage+1)*FEAT_PER<TESTS.length){
+          featPage++;
+          renderFeatList();
+        } else {
+          switchTab("category");
+        }
+      });
+    }
+
+    /* "全部" link */
+    var catMoreBtn=document.getElementById("catMore");
+    if(catMoreBtn){
+      catMoreBtn.addEventListener("click",function(e){
+        e.preventDefault();
+        switchTab("category");
+      });
+    }
+
+    /* ══ Category Page ══ */
+    var catFilter="全部";
+    var catSort="hot";
+    var SORT_OPTIONS=[
+      {key:"hot",label:"按热度"},
+      {key:"time",label:"按时长"},
+      {key:"name",label:"按名称"}
+    ];
+
+    function setCatFilter(cat){
+      catFilter=cat;
+      renderCatSidebar();
+      renderCatList();
+    }
+    function setCatSort(s){
+      catSort=s;
+      renderSortBar();
+      renderCatList();
+    }
+
+    function renderCatSidebar(){
+      var el=document.getElementById("catSidebar");if(!el)return;
+      var all=["全部"].concat(categories);
+      el.innerHTML=all.map(function(c){
+        return '<button data-cat="'+escapeHtml(c)+'"'+(c===catFilter?' class="active"':'')+'>'+escapeHtml(c)+'</button>';
+      }).join("");
+      el.addEventListener("click",function(e){
+        var btn=e.target.closest("button[data-cat]");
+        if(!btn)return;
+        setCatFilter(btn.dataset.cat);
+      },{once:false});
+    }
+
+    function renderSortBar(){
+      var el=document.getElementById("sortBar");if(!el)return;
+      el.innerHTML=SORT_OPTIONS.map(function(o){
+        return '<button class="sort-btn'+(o.key===catSort?" active":"")+'" data-sort="'+o.key+'">'+escapeHtml(o.label)+'</button>';
+      }).join("");
+      el.addEventListener("click",function(e){
+        var btn=e.target.closest("button[data-sort]");
+        if(!btn)return;
+        setCatSort(btn.dataset.sort);
+      });
+    }
+
+    function renderCatList(){
+      var el=document.getElementById("catList");if(!el)return;
+      var searchQ=(document.getElementById("globalSearch")||{}).value||"";
+      searchQ=searchQ.trim().toLowerCase();
+
+      var list=TESTS.filter(function(t){
+        var okCat=catFilter==="全部"||t.category===catFilter;
+        var okQ=!searchQ||t.title.toLowerCase().indexOf(searchQ)!==-1||(t.tags||[]).some(function(tg){return tg.toLowerCase().indexOf(searchQ)!==-1})||t.id.toLowerCase().indexOf(searchQ)!==-1;
+        return okCat&&okQ;
+      });
+
+      /* Sort */
+      if(catSort==="hot"){
+        list.sort(function(a,b){return peopleTested(b.id)-peopleTested(a.id)});
+      }else if(catSort==="time"){
+        list.sort(function(a,b){return(a.estimated||3)-(b.estimated||3)});
+      }else if(catSort==="name"){
+        list.sort(function(a,b){return a.title.localeCompare(b.title)});
+      }
+
+      if(list.length===0){
+        el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">没有找到匹配的测评，试试换个关键词或分类。</div>';
+        return;
+      }
+
+      el.innerHTML=list.map(function(t){
+        var bg=CAT_GRADIENTS[t.category]||"linear-gradient(135deg,#ccc,#eee)";
+        var q=(t.intro||"").split("，")[0]||"你了解自己吗？";
+        var count=peopleTested(t.id);
+        return '<a class="feat-card" href="'+escapeHtml(viewPath(t.id))+'"><div class="feat-card-img" style="background:'+bg+'"><span style="color:rgba(255,255,255,.65);font-size:22px">'+(CAT_ICONS[t.category]||"📋")+'</span></div><div class="feat-card-body"><div class="question">'+escapeHtml(q)+'</div><div class="name">'+escapeHtml(t.title)+'</div><div class="meta-row"><span class="people">👥 '+count+' 人测过</span><span>约 '+escapeHtml(String(t.estimated||3))+' 分钟</span></div></div></a>';
+      }).join("");
+    }
+
+    /* ══ Global Search ══ */
+    var searchInput=document.getElementById("globalSearch");
+    if(searchInput){
+      searchInput.addEventListener("input",function(){
+        if(currentTab==="category"){
+          renderCatList();
+        }else{
+          /* Switch to category tab for search results */
+          if(searchInput.value.trim()){
+            switchTab("category");
+            renderCatList();
+          }
+        }
+      });
+    }
+
+    /* ══ My Tab ══ */
+    function renderMyTab(){
+      var titleEl=document.getElementById("myStatusTitle");
+      var subEl=document.getElementById("myStatusSub");
+      var infoEl=document.getElementById("myAuthInfo");
+      var activateBtn=document.getElementById("myActivateBtn");
+      if(isAuthed()){
+        var auth=window.Auth.getAuth();
+        if(titleEl)titleEl.textContent="已激活 ✅";
+        if(subEl)subEl.textContent="你可以使用所有测评功能";
+        if(infoEl){
+          var expStr="";
+          if(auth.exp){
+            var d=new Date(auth.exp*1000);
+            expStr="有效期至 "+d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+          }
+          infoEl.textContent=expStr||"权限已激活";
+        }
+        if(activateBtn){activateBtn.textContent="查看权限状态"}
+      }else{
+        if(titleEl)titleEl.textContent="未激活";
+        if(subEl)subEl.textContent="激活后即可使用全部测评";
+        if(infoEl)infoEl.textContent="你当前尚未激活权限，请输入激活码开始使用。";
+        if(activateBtn){activateBtn.textContent="激活权限"}
+      }
+    }
+
+    /* ══ Init ══ */
+    loadSiteSettings();
+    setupBubbles();
+    renderCarousel();
+    renderCatRow();
+    renderHotRow();
+    renderNewGrid();
+    renderFeatList();
+    renderCatSidebar();
+    renderSortBar();
+    renderCatList();
+    renderMyTab();
+  })();
+  </script>
+</body>
+</html>

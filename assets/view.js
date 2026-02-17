@@ -457,6 +457,67 @@ function startTest(test, resume, variantId){
     saveJSON(answersKey, answers);
   }
 
+  function showProgressOverview(){
+    const answered = answers.filter(a => a !== null).length;
+    const unanswered = answers.filter(a => a === null).length;
+    const answerStatus = answers.map((a, i) => {
+      const status = a !== null ? "✓" : "○";
+      const cls = a !== null ? "answered" : "unanswered";
+      return `<button class="progress-item ${cls}" data-jump="${i}" type="button">${i+1} ${status}</button>`;
+    }).join("");
+
+    $("#panelTitle").textContent = "答题进度";
+    $("#progressText").textContent = `已答 ${answered}/${total} 题`;
+
+    $("#panelBody").innerHTML = `
+      <div class="question">
+        <div class="q-top">
+          <div class="q-num">进度总览</div>
+          <div class="small">点击题号可跳转</div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="result-badges">
+            <span class="result-badge">已完成：${answered} 题</span>
+            <span class="result-badge">未作答：${unanswered} 题</span>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(50px,1fr));gap:8px">
+          ${answerStatus}
+        </div>
+        <div class="small" style="margin-top:16px;color:var(--muted)">
+          ✓ 表示已作答，○ 表示未作答。仅可跳转到已作答或下一题。
+        </div>
+      </div>
+    `;
+
+    $("#panelActions").innerHTML = `
+      <button class="btn btn-primary" id="backToQuestion" type="button">继续答题</button>
+    `;
+
+    $("#backToQuestion").addEventListener("click", () => {
+      renderQ();
+    });
+
+    document.querySelectorAll("[data-jump]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const targetIndex = Number(btn.dataset.jump);
+        // Only allow jumping to answered questions or the next unanswered question
+        const maxAllowedIndex = answers.findIndex((a, i) => i > index && a === null);
+        const canJump = answers[targetIndex] !== null || 
+                       targetIndex <= index || 
+                       (maxAllowedIndex === -1 ? targetIndex <= total-1 : targetIndex <= maxAllowedIndex);
+        
+        if(canJump || targetIndex <= index){
+          index = targetIndex;
+          save();
+          renderQ();
+        } else {
+          toast("请按顺序作答，不可跳过未答题目");
+        }
+      });
+    });
+  }
+
   function renderQ(){
     $("#panelTitle").textContent = "答题中";
     const total = questions.length;
@@ -464,6 +525,12 @@ function startTest(test, resume, variantId){
 
     const pctv = Math.round(((index)/Math.max(1,total-1))*100);
     const q = questions[index];
+
+    // Scroll to question panel when starting or navigating
+    setTimeout(() => {
+      const panel = $("#mainPanel");
+      if(panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
 
     const opts = q.opts.map((o, oi) => {
       const checked = answers[index] === oi ? "checked" : "";
@@ -500,8 +567,9 @@ function startTest(test, resume, variantId){
     }, { once:true });
 
     $("#panelActions").innerHTML = `
-      <button class="btn btn-ghost" id="prevBtn" type="button">上一步</button>
-      <button class="btn btn-primary" id="nextBtn" type="button">${index === total-1 ? "提交" : "下一步"}</button>
+      <button class="btn btn-ghost" id="prevBtn" type="button">上一题</button>
+      <button class="btn btn-ghost" id="progressBtn" type="button">查看进度</button>
+      <button class="btn btn-primary" id="nextBtn" type="button">${index === total-1 ? "提交" : "下一题"}</button>
     `;
     $("#prevBtn").disabled = index === 0;
 
@@ -510,6 +578,11 @@ function startTest(test, resume, variantId){
       save();
       renderQ();
     });
+
+    $("#progressBtn").addEventListener("click", () => {
+      showProgressOverview();
+    });
+
     $("#nextBtn").addEventListener("click", () => {
       if(answers[index] === null){ toast("请先选择一个选项"); return; }
       // 先测试后引导购买：免费预览题数限制
@@ -519,6 +592,12 @@ function startTest(test, resume, variantId){
       }
       if(index === total-1){
         if(!isAuthed()){ renderPaywall(test); return; }
+        // Check if all questions are answered before allowing submission
+        const unansweredCount = answers.filter(a => a === null).length;
+        if(unansweredCount > 0){
+          toast(`还有 ${unansweredCount} 题未作答，请完成所有题目后再提交`);
+          return;
+        }
         submit(test, answers, { variantId, factorMap, questions });
         return;
       }

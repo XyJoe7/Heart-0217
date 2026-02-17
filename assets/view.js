@@ -436,6 +436,7 @@ function startTest(test, resume, variantId){
     variantId = v.id;
   }
 
+  const total = questions.length;
   let index = 0;
   let answers = new Array(questions.length).fill(null);
 
@@ -526,20 +527,22 @@ function startTest(test, resume, variantId){
     });
   }
 
-  function renderQ(){
+  function renderQ(scrollToTop = false){
     $("#panelTitle").textContent = "答题中";
-    const total = questions.length;
     $("#progressText").textContent = `${index+1}/${total}`;
 
     const pctv = Math.round(((index)/Math.max(1,total-1))*100);
     const q = questions[index];
 
-    // Scroll to question panel when starting or navigating (delay allows DOM update)
-    const SCROLL_DELAY_MS = 200;
-    setTimeout(() => {
-      const panel = $("#mainPanel");
-      if(panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, SCROLL_DELAY_MS);
+    // Scroll to question panel when entering question flow
+    if(scrollToTop){
+      const SCROLL_DELAY_MS = 200;
+      setTimeout(() => {
+        const panel = $("#mainPanel");
+        const top = panel ? Math.max(0, panel.getBoundingClientRect().top + window.scrollY - 8) : 0;
+        window.scrollTo({ top, behavior: "smooth" });
+      }, SCROLL_DELAY_MS);
+    }
 
     const opts = q.opts.map((o, oi) => {
       const checked = answers[index] === oi ? "checked" : "";
@@ -616,7 +619,7 @@ function startTest(test, resume, variantId){
     });
   }
 
-  renderQ();
+  renderQ(true);
 }
 
 function compute(test, answers, ctx){

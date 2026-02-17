@@ -1022,23 +1022,106 @@ async function destroyExpired(){
     }
     
     function editCarouselSlide(idx){
-      const slide = idx >= 0 ? _carouselData[idx] : { title: "", description: "", image: "", link: "" };
-      const title = prompt("轮播标题:", slide.title || "");
-      if(title === null) return;
-      const image = prompt("图片 URL:", slide.image || "");
-      if(image === null) return;
-      const description = prompt("描述（可选）:", slide.description || "");
-      if(description === null) return;
-      const link = prompt("链接 URL（可选）:", slide.link || "");
-      if(link === null) return;
+      const slide = idx >= 0 ? _carouselData[idx] : { title: "", description: "", image: "", link: "", bg: "linear-gradient(135deg,#7c83fd,#ff6b9d)" };
+      const isEdit = idx >= 0;
       
-      const newSlide = { title, description, image, link };
-      if(idx >= 0){
-        _carouselData[idx] = newSlide;
-      } else {
-        _carouselData.push(newSlide);
-      }
-      saveCarousel();
+      // Create inline form in the carousel list
+      const formHtml = `
+        <div class="card" style="margin-bottom:10px;padding:14px;border:2px solid var(--primary)">
+          <h4 style="margin:0 0 10px">${isEdit ? '编辑轮播图' : '新增轮播图'}</h4>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label class="small">
+              标题 *
+              <input id="carouselTitle" value="${escapeHtml(slide.title||'')}" style="width:100%;margin-top:4px" required/>
+            </label>
+            <label class="small">
+              描述（副标题）
+              <input id="carouselDescription" value="${escapeHtml(slide.description||slide.sub||'')}" style="width:100%;margin-top:4px"/>
+            </label>
+            <label class="small">
+              图片 URL（可选，留空则使用渐变背景）
+              <input id="carouselImage" value="${escapeHtml(slide.image||'')}" style="width:100%;margin-top:4px" placeholder="https://example.com/image.jpg"/>
+            </label>
+            <label class="small">
+              背景渐变（图片为空时使用）
+              <input id="carouselBg" value="${escapeHtml(slide.bg||'linear-gradient(135deg,#7c83fd,#ff6b9d)')}" style="width:100%;margin-top:4px"/>
+            </label>
+            <label class="small">
+              链接 URL（可选）
+              <input id="carouselLink" value="${escapeHtml(slide.link||'')}" style="width:100%;margin-top:4px" placeholder="/view/mbti/"/>
+            </label>
+            <div style="margin-top:4px">
+              <div class="small" style="margin-bottom:6px">预览（2.4:1 比例）</div>
+              <div id="carouselPreview" style="aspect-ratio:2.4/1;border-radius:12px;background:${escapeHtml(slide.bg||'linear-gradient(135deg,#7c83fd,#ff6b9d)')};display:flex;align-items:center;justify-content:center;padding:20px;color:#fff;position:relative;overflow:hidden">
+                ${slide.image ? `<img src="${escapeHtml(slide.image)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>` : ''}
+                <div style="position:relative;z-index:2;text-align:center">
+                  <h3 style="margin:0 0 4px;text-shadow:0 2px 8px rgba(0,0,0,.2)">${escapeHtml(slide.title||'标题预览')}</h3>
+                  <p style="margin:0;opacity:0.9;font-size:14px">${escapeHtml(slide.description||slide.sub||'描述预览')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row" style="margin-top:12px;gap:10px">
+            <button class="btn btn-primary" id="saveCarouselForm">保存</button>
+            <button class="btn btn-ghost" id="cancelCarouselForm">取消</button>
+          </div>
+        </div>
+      `;
+      
+      // Insert form before the carousel list or at the top
+      const list = $("#carouselList");
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = formHtml;
+      list.insertBefore(tempDiv.firstElementChild, list.firstElementChild);
+      
+      // Setup preview updates
+      const updatePreview = () => {
+        const title = $("#carouselTitle").value || '标题预览';
+        const desc = $("#carouselDescription").value || '描述预览';
+        const image = $("#carouselImage").value;
+        const bg = $("#carouselBg").value || 'linear-gradient(135deg,#7c83fd,#ff6b9d)';
+        
+        $("#carouselPreview").style.background = bg;
+        $("#carouselPreview").innerHTML = `
+          ${image ? `<img src="${escapeHtml(image)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>` : ''}
+          <div style="position:relative;z-index:2;text-align:center">
+            <h3 style="margin:0 0 4px;text-shadow:0 2px 8px rgba(0,0,0,.2)">${escapeHtml(title)}</h3>
+            <p style="margin:0;opacity:0.9;font-size:14px">${escapeHtml(desc)}</p>
+          </div>
+        `;
+      };
+      
+      ["#carouselTitle", "#carouselDescription", "#carouselImage", "#carouselBg"].forEach(id => {
+        $(id)?.addEventListener("input", updatePreview);
+      });
+      
+      $("#saveCarouselForm").addEventListener("click", async () => {
+        const newSlide = {
+          title: $("#carouselTitle").value || "",
+          description: $("#carouselDescription").value || "",
+          sub: $("#carouselDescription").value || "", // Backward compatibility
+          image: $("#carouselImage").value || "",
+          bg: $("#carouselBg").value || "linear-gradient(135deg,#7c83fd,#ff6b9d)",
+          link: $("#carouselLink").value || ""
+        };
+        
+        if(!newSlide.title){
+          toast("请输入标题");
+          return;
+        }
+        
+        if(isEdit){
+          _carouselData[idx] = newSlide;
+        } else {
+          _carouselData.push(newSlide);
+        }
+        
+        await saveCarousel();
+      });
+      
+      $("#cancelCarouselForm").addEventListener("click", () => {
+        renderCarousel();
+      });
     }
     
     async function saveCarousel(){

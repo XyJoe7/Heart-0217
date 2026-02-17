@@ -250,7 +250,14 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $testData = $in['test'] ?? null;
     if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
     $id = trim(strval($testData['id'] ?? ''));
-    if ($id === '' || !preg_match('/^[a-z0-9_-]+$/', $id)) return ['ok'=>false,'error'=>'invalid_id'];
+    // Enhanced validation: check format, length, and dangerous patterns
+    if ($id === '' || 
+        strlen($id) > 50 || 
+        !preg_match('/^[a-z0-9_-]+$/', $id) ||
+        strpos($id, '..') !== false ||
+        $id[0] === '.') {
+      return ['ok'=>false,'error'=>'invalid_id'];
+    }
     $tests = load_json_file($testsFile);
     if (!is_array($tests) || !isset($tests[0])) $tests = [];
     foreach ($tests as $t) {
@@ -274,6 +281,55 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     save_json_file_atomic($testsFile, $newTests);
     rebuild_tests_js($testsFile);
     return ['ok'=>true];
+  }
+
+  if ($action === 'exportTest') {
+    $id = trim(strval($in['id'] ?? ''));
+    if ($id === '') return ['ok'=>false,'error'=>'missing_id'];
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    foreach ($tests as $t) {
+      if (($t['id'] ?? '') === $id) {
+        // Return the test data as JSON for download
+        return ['ok'=>true,'test'=>$t,'filename'=>$id . '_export.json'];
+      }
+    }
+    return ['ok'=>false,'error'=>'not_found'];
+  }
+
+  if ($action === 'importTest') {
+    $testData = $in['test'] ?? null;
+    if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
+    $id = trim(strval($testData['id'] ?? ''));
+    // Enhanced validation: check format, length, and dangerous patterns
+    if ($id === '' || 
+        strlen($id) > 50 || 
+        !preg_match('/^[a-z0-9_-]+$/', $id) ||
+        strpos($id, '..') !== false ||
+        $id[0] === '.') {
+      return ['ok'=>false,'error'=>'invalid_id'];
+    }
+    
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    
+    // Check if ID already exists
+    $found = false;
+    foreach ($tests as $i => $t) {
+      if (($t['id'] ?? '') === $id) {
+        $tests[$i] = $testData;
+        $found = true;
+        break;
+      }
+    }
+    
+    if (!$found) {
+      $tests[] = $testData;
+    }
+    
+    save_json_file_atomic($testsFile, $tests);
+    rebuild_tests_js($testsFile);
+    return ['ok'=>true,'imported'=>$id,'updated'=>$found];
   }
 
   // ═══════════════════════════════════════════
@@ -586,6 +642,31 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     }
     $analyticsDb['events'] = $events;
     save_json_file_atomic($analyticsFile, $analyticsDb);
+    return ['ok'=>true];
+  }
+
+  // ═══════════════════════════════════════════
+  // 分类管理（Categories Management）
+  // ═══════════════════════════════════════════
+  
+  if ($action === 'getCategories') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $categories = $siteData['categories'] ?? [
+      ['id'=>'emotion','name'=>'情绪量表','icon'=>'😊','image'=>''],
+      ['id'=>'personality','name'=>'人格测试','icon'=>'🎭','image'=>''],
+      ['id'=>'relationship','name'=>'恋爱关系','icon'=>'💕','image'=>''],
+      ['id'=>'career','name'=>'职业天赋','icon'=>'💼','image'=>'']
+    ];
+    return ['ok'=>true,'categories'=>$categories];
+  }
+
+  if ($action === 'updateCategories') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $categories = $in['categories'] ?? [];
+    $siteData['categories'] = $categories;
+    save_json_file_atomic($seoPath, $siteData);
     return ['ok'=>true];
   }
 

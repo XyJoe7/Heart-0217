@@ -250,7 +250,14 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $testData = $in['test'] ?? null;
     if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
     $id = trim(strval($testData['id'] ?? ''));
-    if ($id === '' || !preg_match('/^[a-z0-9_-]+$/', $id)) return ['ok'=>false,'error'=>'invalid_id'];
+    // Enhanced validation: check format, length, and dangerous patterns
+    if ($id === '' || 
+        strlen($id) > 50 || 
+        !preg_match('/^[a-z0-9_-]+$/', $id) ||
+        strpos($id, '..') !== false ||
+        $id[0] === '.') {
+      return ['ok'=>false,'error'=>'invalid_id'];
+    }
     $tests = load_json_file($testsFile);
     if (!is_array($tests) || !isset($tests[0])) $tests = [];
     foreach ($tests as $t) {
@@ -294,7 +301,14 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $testData = $in['test'] ?? null;
     if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
     $id = trim(strval($testData['id'] ?? ''));
-    if ($id === '' || !preg_match('/^[a-z0-9_-]+$/', $id)) return ['ok'=>false,'error'=>'invalid_id'];
+    // Enhanced validation: check format, length, and dangerous patterns
+    if ($id === '' || 
+        strlen($id) > 50 || 
+        !preg_match('/^[a-z0-9_-]+$/', $id) ||
+        strpos($id, '..') !== false ||
+        $id[0] === '.') {
+      return ['ok'=>false,'error'=>'invalid_id'];
+    }
     
     $tests = load_json_file($testsFile);
     if (!is_array($tests) || !isset($tests[0])) $tests = [];

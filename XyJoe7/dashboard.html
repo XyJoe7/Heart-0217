@@ -1327,7 +1327,7 @@ async function destroyExpired(){
       const image = prompt("图片 URL（留空使用默认）:", itemData.image || "");
       if(image === null) return;
       
-      const newItem = {
+      const rawItem = {
         testId,
         customTitle: customTitle || undefined,
         briefIntro: briefIntro || undefined,
@@ -1336,8 +1336,10 @@ async function destroyExpired(){
         image: image || undefined
       };
       
-      // Remove undefined fields
-      Object.keys(newItem).forEach(k => newItem[k] === undefined && delete newItem[k]);
+      // Remove undefined fields using a cleaner functional approach
+      const newItem = Object.fromEntries(
+        Object.entries(rawItem).filter(([_, v]) => v !== undefined)
+      );
       
       if(idx >= 0){
         section.items[idx] = newItem;
@@ -1420,8 +1422,13 @@ async function destroyExpired(){
       if(idx < 0){
         id = prompt("分类 ID（英文，如：emotion）:", id || "");
         if(id === null) return;
-        if(!id || !/^[a-z0-9_-]+$/.test(id)){
-          alert("ID 格式不正确，只能使用小写字母、数字、下划线和连字符");
+        // Enhanced validation: check format, length, and dangerous patterns
+        if(!id || 
+           id.length > 50 ||
+           !/^[a-z0-9_-]+$/.test(id) ||
+           id.indexOf('..') !== -1 ||
+           id[0] === '.'){
+          alert("ID 格式不正确，只能使用小写字母、数字、下划线和连字符，不能以点开头或包含两个连续的点");
           return;
         }
         // Check if ID already exists

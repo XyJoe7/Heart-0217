@@ -200,7 +200,11 @@ class Middleware {
                 $status
             );
             
-            file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+            $result = file_put_contents($logFile, $logEntry, FILE_APPEND | LOCK_EX);
+            
+            if ($result === false) {
+                error_log("Failed to write access log for: {$method} {$uri}");
+            }
             
             return $result;
         };

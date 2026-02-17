@@ -141,7 +141,10 @@ class Security {
             }
         }
         
-        file_put_contents($path, json_encode(self::$rateLimitStore), LOCK_EX);
+        $result = file_put_contents($path, json_encode(self::$rateLimitStore), LOCK_EX);
+        if ($result === false) {
+            error_log("Failed to save rate limit data to {$path}");
+        }
     }
     
     /**
@@ -152,7 +155,7 @@ class Security {
             return false;
         }
         
-        // Must start with letter or number
+        // Must start with letter or number (length check ensures id[0] is safe)
         if (!preg_match('/^[a-zA-Z0-9]/', $id)) {
             return false;
         }
@@ -162,7 +165,7 @@ class Security {
             return false;
         }
         
-        // No path traversal patterns
+        // No path traversal patterns (length check ensures safe array access)
         if (strpos($id, '..') !== false || $id[0] === '.' || $id[0] === '/') {
             return false;
         }
@@ -292,6 +295,11 @@ class Security {
         ];
         
         $logLine = json_encode($logEntry, JSON_UNESCAPED_UNICODE) . "\n";
-        file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
+        $result = file_put_contents($logFile, $logLine, FILE_APPEND | LOCK_EX);
+        
+        if ($result === false) {
+            // Fallback: log to PHP error log if file write fails
+            error_log("Security event (failed to write to file): {$event} - " . json_encode($context));
+        }
     }
 }

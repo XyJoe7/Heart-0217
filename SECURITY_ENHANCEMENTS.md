@@ -197,8 +197,9 @@ Strict-Transport-Security: ... (HTTPS only)
 
 3. **定期清理日志**
    ```bash
-   # 设置 cron 任务清理旧日志
-   0 0 * * 0 find /path/to/data -name "*.log" -mtime +30 -delete
+   # 设置 cron 任务清理旧日志（示例使用项目 data 目录）
+   # 每周日凌晨删除30天前的日志
+   0 0 * * 0 find /var/www/html/data -name "*.log" -mtime +30 -delete
    ```
 
 4. **监控**

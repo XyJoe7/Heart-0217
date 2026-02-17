@@ -2,6 +2,9 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 
+// Configuration constants
+const MAX_CODE_LOG_LENGTH = 20; // Maximum length for logging activation codes
+
 // Apply security headers and rate limiting
 Security::addSecurityHeaders();
 
@@ -21,7 +24,7 @@ $code = trim(strval($in['code'] ?? ''));
 
 // Validate code format to prevent injection attacks
 if ($code !== '' && !preg_match('/^[A-Z0-9-]+$/i', $code)) {
-    Security::logSecurityEvent('invalid_code_format', ['code' => substr($code, 0, 20), 'ip' => $ip]);
+    Security::logSecurityEvent('invalid_code_format', ['code' => substr($code, 0, MAX_CODE_LOG_LENGTH), 'ip' => $ip]);
     Security::saveRateLimitData($rateLimitFile);
     respond(['ok'=>false,'error'=>'invalid_code_format','message'=>'激活码格式无效'], 400);
 }

@@ -2,6 +2,11 @@
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
 
+// Rate limit configuration
+const ADMIN_GENERAL_RATE_LIMIT = 120;
+const ADMIN_LOGIN_RATE_LIMIT = 5;
+const ADMIN_LOGIN_WINDOW = 900; // 15 minutes
+
 // Apply security headers and rate limiting
 Security::addSecurityHeaders();
 
@@ -10,7 +15,7 @@ $rateLimitFile = __DIR__ . '/../data/ratelimit.json';
 Security::loadRateLimitData($rateLimitFile);
 
 // General rate limit for admin endpoint
-if (!Security::checkRateLimit("admin:general:{$ip}", 120, 60)) {
+if (!Security::checkRateLimit("admin:general:{$ip}", ADMIN_GENERAL_RATE_LIMIT, 60)) {
     Security::saveRateLimitData($rateLimitFile);
     respond(['ok'=>false,'error'=>'rate_limit_exceeded','message'=>'请求过于频繁'], 429);
 }
@@ -34,7 +39,7 @@ if ($action === 'login') {
   // Rate limit login attempts more strictly
   $loginKey = "login:admin:{$ip}";
   
-  if (!Security::checkRateLimit($loginKey, 5, 900)) { // 5 attempts per 15 minutes
+  if (!Security::checkRateLimit($loginKey, ADMIN_LOGIN_RATE_LIMIT, ADMIN_LOGIN_WINDOW)) {
     Security::logSecurityEvent('admin_login_rate_limited', ['ip' => $ip]);
     Security::saveRateLimitData($rateLimitFile);
     respond(['ok'=>false,'error'=>'rate_limit_exceeded','message'=>'登录尝试次数过多，请15分钟后再试'], 429);

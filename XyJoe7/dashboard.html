@@ -384,11 +384,11 @@ async function destroyExpired(){
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px">
             <div class="pill" style="padding:10px;text-align:center"><b>${c.total}</b><br/>激活码总数</div>
             <div class="pill" style="padding:10px;text-align:center"><b>${c.active}</b><br/>可用码</div>
-            <div class="pill" style="padding:10px;text-align:center"><b>${c.todayUses}</b><br/>今日使用</div>
-            <div class="pill" style="padding:10px;text-align:center"><b>${c.weekUses}</b><br/>近7天使用</div>
-            <div class="pill" style="padding:10px;text-align:center"><b>${c.monthUses}</b><br/>近30天使用</div>
-            <div class="pill" style="padding:10px;text-align:center"><b>${s.active}</b><br/>活跃会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${c.totalUses}</b><br/>总使用次数</div>
             <div class="pill" style="padding:10px;text-align:center"><b>${s.today}</b><br/>今日新会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.week}</b><br/>近7天会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.month}</b><br/>近30天会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.active}</b><br/>活跃会话</div>
             <div class="pill" style="padding:10px;text-align:center"><b>${r.total}</b><br/>分销订单</div>
             <div class="pill" style="padding:10px;text-align:center"><b>${tc.total}</b><br/>测评完成数</div>
             <div class="pill" style="padding:10px;text-align:center"><b>${tc.today}</b><br/>今日完成</div>

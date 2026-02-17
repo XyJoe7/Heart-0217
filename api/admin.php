@@ -354,19 +354,12 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     // Code stats
     $totalCodes = count($codes);
     $totalUses = 0;
-    $todayUses = 0;
-    $weekUses = 0;
-    $monthUses = 0;
     $activeCodes = 0;
     $sourceStats = [];
 
     foreach ($codes as $code => $c) {
       $uses = intval($c['uses'] ?? 0);
       $totalUses += $uses;
-      $lastUsed = intval($c['lastUsedAt'] ?? 0);
-      if ($lastUsed >= $today) $todayUses += $uses;
-      if ($lastUsed >= $weekAgo) $weekUses += $uses;
-      if ($lastUsed >= $monthAgo) $monthUses += $uses;
       $exp = intval($c['expiresAt'] ?? 0);
       $max = intval($c['maxUses'] ?? 1);
       if (!($c['disabled'] ?? false) && ($exp === 0 || $exp > $t) && $uses < $max) $activeCodes++;
@@ -377,12 +370,16 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
       $sourceStats[$source]++;
     }
 
-    // Session stats
+    // Session stats (count by issuedAt for accurate time-based metrics)
     $totalSessions = count($sessions);
     $todaySessions = 0;
+    $weekSessions = 0;
+    $monthSessions = 0;
     foreach ($sessions as $s) {
       $issued = intval($s['issuedAt'] ?? 0);
       if ($issued >= $today) $todaySessions++;
+      if ($issued >= $weekAgo) $weekSessions++;
+      if ($issued >= $monthAgo) $monthSessions++;
     }
 
     // Referral stats
@@ -424,11 +421,11 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     return ['ok'=>true,'analytics'=>[
       'codes' => [
         'total'=>$totalCodes, 'active'=>$activeCodes,
-        'totalUses'=>$totalUses, 'todayUses'=>$todayUses,
-        'weekUses'=>$weekUses, 'monthUses'=>$monthUses,
+        'totalUses'=>$totalUses,
       ],
       'sessions' => [
         'active'=>$totalSessions, 'today'=>$todaySessions,
+        'week'=>$weekSessions, 'month'=>$monthSessions,
       ],
       'referrals' => [
         'total'=>$totalReferrals, 'today'=>$todayReferrals,

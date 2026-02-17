@@ -274,7 +274,7 @@ function renderPaywall(test){
     <div class="lock-cta">
       <div class="cta-card warn" style="border-color:var(--primary)">
         <h4>🔒 免费预览已结束</h4>
-        <p>你已体验了前 ${_freePreviewQuestions} 道题目，看起来这个测评很适合你！</p>
+        <p>你已体验了前 ${_freePreviewQuestions} 道题目，想了解完整结果吗？</p>
         <p>激活后即可完成全部题目并获得专属结果解读，已作答的进度会自动保留。</p>
         <div class="cta-steps">
           <div>1）点击"去激活"获取激活码</div>
@@ -504,7 +504,7 @@ function startTest(test, resume, variantId){
     $("#nextBtn").addEventListener("click", () => {
       if(answers[index] === null){ toast("请先选择一个选项"); return; }
       // 先测试后引导购买：免费预览题数限制
-      if(!isAuthed() && _freePreviewQuestions > 0 && index >= _freePreviewQuestions - 1){
+      if(!isAuthed() && _freePreviewQuestions > 0 && index + 1 >= _freePreviewQuestions){
         renderPaywall(test);
         return;
       }

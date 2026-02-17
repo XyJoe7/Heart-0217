@@ -54,7 +54,7 @@
     if(params.get('utm_source')) extra.utmSource = params.get('utm_source');
     if(params.get('utm_medium')) extra.utmMedium = params.get('utm_medium');
     if(params.get('utm_campaign')) extra.utmCampaign = params.get('utm_campaign');
-    extra.source = document.referrer ? 'referrer' : (extra.refCode ? 'affiliate' : 'direct');
+    extra.source = extra.refCode ? 'affiliate' : (document.referrer ? 'referrer' : 'direct');
 
     const res = await postJson(API.redeem, { code: String(code||"").trim(), ...extra });
     if(!res.ok) return res;

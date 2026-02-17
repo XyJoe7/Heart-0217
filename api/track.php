@@ -11,7 +11,6 @@ $source = trim(strval($in['source'] ?? ''));
 
 if ($eventType === '') respond(['ok'=>false,'error'=>'missing_event_type'], 400);
 
-// Rate limiting: simple time-based check
 $analyticsFile = __DIR__ . '/../data/analytics.json';
 $lock = __DIR__ . '/../data/.lock';
 

@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 
+// Load security and middleware classes
+require_once __DIR__ . '/Security.php';
+require_once __DIR__ . '/Middleware.php';
+
 function cfg(): array {
   static $cfg = null;
   if ($cfg !== null) return $cfg;

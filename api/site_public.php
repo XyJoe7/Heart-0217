@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require __DIR__ . '/_lib.php';
+$cfg = cfg();
 $path = __DIR__ . '/../data/site.json';
 $data = load_json_file($path);
 if (!$data) {
@@ -14,4 +15,6 @@ if (!$data) {
     'analyticsCode'=>''
   ];
 }
+$freePreview = intval($cfg['FREE_PREVIEW_QUESTIONS'] ?? 3);
+$data['freePreviewQuestions'] = $freePreview;
 respond(['ok'=>true,'settings'=>$data]);

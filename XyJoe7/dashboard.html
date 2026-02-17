@@ -103,6 +103,118 @@
       </div>
     </section>
 
+      <!-- ═══ 运营数据汇总 ═══ -->
+      <section class="card" id="analyticsCard" style="display:none;margin-top:14px">
+        <h3 style="margin:0 0 10px">📊 实时运营数据</h3>
+        <div id="analyticsBody" class="small">加载中…</div>
+      </section>
+
+      <!-- ═══ 来源追踪 ═══ -->
+      <section class="card" id="sourceCard" style="display:none;margin-top:14px">
+        <h3 style="margin:0 0 10px">📍 用户来源追踪</h3>
+        <div id="sourceBody" class="small">加载中…</div>
+      </section>
+
+      <!-- ═══ 量表管理 ═══ -->
+      <section class="card" id="testsCard" style="display:none;margin-top:14px">
+        <div class="row" style="justify-content:space-between">
+          <h3 style="margin:0">📝 量表管理</h3>
+          <div class="row">
+            <button class="btn btn-primary" id="addTestBtn">新增量表</button>
+            <button class="btn btn-ghost" id="refreshTestsBtn">刷新</button>
+          </div>
+        </div>
+        <div style="overflow:auto;margin-top:10px">
+          <table>
+            <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>题数</th><th>预计时间</th><th>操作</th></tr></thead>
+            <tbody id="testsTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ═══ 量表编辑弹窗 ═══ -->
+      <div id="testEditorOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);overflow-y:auto">
+        <div style="max-width:900px;margin:40px auto;padding:20px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+          <div class="row" style="justify-content:space-between">
+            <h3 style="margin:0" id="editorTitle">编辑量表</h3>
+            <button class="btn btn-ghost" id="closeEditorBtn">关闭</button>
+          </div>
+          <div style="margin-top:14px">
+            <div class="row" style="gap:10px">
+              <label class="small" style="flex:1">ID（小写字母/数字/横线）<br/><input id="testId" style="width:100%" placeholder="例: gad7"/></label>
+              <label class="small" style="flex:2">标题<br/><input id="testTitle" style="width:100%" placeholder="例: GAD-7 广泛性焦虑评估"/></label>
+            </div>
+            <div class="row" style="gap:10px;margin-top:10px">
+              <label class="small" style="flex:1">分类<br/><input id="testCategory" style="width:100%" placeholder="例: 情绪量表"/></label>
+              <label class="small" style="flex:1">标签（逗号分隔）<br/><input id="testTags" style="width:100%" placeholder="例: 焦虑,情绪"/></label>
+              <label class="small" style="flex:1">预计时间（分钟）<br/><input id="testEstimated" type="number" style="width:100%" value="10"/></label>
+            </div>
+            <label class="small" style="display:block;margin-top:10px">简介<br/><textarea id="testIntro" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+            <label class="small" style="display:block;margin-top:10px">评分规则 JSON<br/><textarea id="testRule" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace;font-size:12px"></textarea></label>
+            <div style="margin-top:14px">
+              <div class="row" style="justify-content:space-between">
+                <h4 style="margin:0">题目列表</h4>
+                <button class="btn btn-ghost" id="addQuestionBtn">+ 添加题目</button>
+              </div>
+              <div id="questionsContainer" style="margin-top:10px;max-height:400px;overflow-y:auto"></div>
+            </div>
+            <div class="row" style="margin-top:14px">
+              <button class="btn btn-primary" id="saveTestBtn">保存量表</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ 分销管理 ═══ -->
+      <section class="card" id="referralCard" style="display:none;margin-top:14px">
+        <div class="row" style="justify-content:space-between">
+          <h3 style="margin:0">🔗 分销管理</h3>
+          <button class="btn btn-ghost" id="refreshRefBtn">刷新</button>
+        </div>
+        <div class="row" style="gap:10px;margin-top:10px">
+          <label class="small" style="flex:1">分销员名称<br/><input id="refName" style="width:100%" placeholder="例: 张三"/></label>
+          <label class="small" style="flex:1">佣金比例 (%)<br/><input id="refCommission" type="number" min="0" max="100" value="10" style="width:100%"/></label>
+          <label class="small" style="flex:1">备注<br/><input id="refNote" style="width:100%"/></label>
+          <div style="align-self:flex-end"><button class="btn btn-primary" id="createRefBtn">创建分销码</button></div>
+        </div>
+        <div id="refCreatedBox" class="small" style="margin-top:8px"></div>
+        <div style="overflow:auto;margin-top:10px">
+          <table>
+            <thead><tr><th>分销码</th><th>名称</th><th>佣金</th><th>订单数</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="refTbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ═══ SEO 设置 ═══ -->
+      <section class="card" id="seoCard" style="display:none;margin-top:14px">
+        <h3 style="margin:0 0 10px">🔍 SEO 优化设置</h3>
+        <div class="row" style="gap:14px 10px">
+          <label class="small" style="flex:1 1 220px">全局标题（title）<br/><input id="seoTitle" style="width:100%"/></label>
+          <label class="small" style="flex:1 1 220px">全局描述（description）<br/><textarea id="seoDesc" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+        </div>
+        <div class="row" style="gap:14px 10px;margin-top:10px">
+          <label class="small" style="flex:1 1 220px">全局关键词（keywords）<br/><input id="seoKeywords" style="width:100%"/></label>
+          <label class="small" style="flex:1 1 220px">OG 图片 URL<br/><input id="seoOgImage" style="width:100%"/></label>
+        </div>
+        <div class="row" style="gap:14px 10px;margin-top:10px">
+          <label class="small" style="flex:1 1 220px">网站域名（含 https://）<br/><input id="seoCanonical" style="width:100%" placeholder="https://example.com"/></label>
+          <label class="small" style="flex:1 1 140px">Sitemap 更新频率<br/>
+            <select id="seoFreq" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px">
+              <option value="daily">每天</option>
+              <option value="weekly" selected>每周</option>
+              <option value="monthly">每月</option>
+            </select>
+          </label>
+          <label class="small" style="flex:1 1 160px;display:flex;align-items:center;gap:8px;margin-top:18px">
+            <input type="checkbox" id="seoAutoSitemap" checked/> 自动生成 sitemap.xml
+          </label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-primary" id="saveSeoBtn">保存 SEO 设置</button>
+        </div>
+      </section>
+
   </main>
 
   <script>
@@ -130,6 +242,11 @@
       if(tip) tip.style.display = "none";
       const logout=document.getElementById("logoutBtn");
       if(logout) logout.style.display = ok ? "" : "none";
+      // New sections
+      ["analyticsCard","sourceCard","testsCard","referralCard","seoCard"].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.style.display = ok ? "block" : "none";
+      });
     }
     function setToken(t){ if(t) localStorage.setItem(stKey,t); else localStorage.removeItem(stKey); }
 
@@ -168,6 +285,11 @@
       }
       await listCodes();
       await loadSiteSettings();
+      await loadAnalytics();
+      await loadSourceReport();
+      await loadTests();
+      await loadReferrers();
+      await loadSeoSettings();
     }
 
     function statusBadge(c){
@@ -246,6 +368,310 @@ async function destroyExpired(){
       await refreshAll();
     }
 
+    // ═══════════════════════════════════════════
+    // 运营数据汇总
+    // ═══════════════════════════════════════════
+    async function loadAnalytics(){
+      try{
+        const j = await call("getAnalytics");
+        const a = j.analytics;
+        const c = a.codes;
+        const s = a.sessions;
+        const r = a.referrals;
+        const tc = a.testCompletions;
+        const popular = Object.entries(a.popularTests||{}).map(([k,v])=>`<span class="pill">${k}: ${v}次</span>`).join(" ");
+        $("#analyticsBody").innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px">
+            <div class="pill" style="padding:10px;text-align:center"><b>${c.total}</b><br/>激活码总数</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${c.active}</b><br/>可用码</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${c.totalUses}</b><br/>总使用次数</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.today}</b><br/>今日新会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.week}</b><br/>近7天会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.month}</b><br/>近30天会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${s.active}</b><br/>活跃会话</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${r.total}</b><br/>分销订单</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${tc.total}</b><br/>测评完成数</div>
+            <div class="pill" style="padding:10px;text-align:center"><b>${tc.today}</b><br/>今日完成</div>
+          </div>
+          ${popular ? `<div><b>热门测评：</b>${popular}</div>` : ""}
+        `;
+      }catch(e){ $("#analyticsBody").textContent = "加载失败"; }
+    }
+
+    // ═══════════════════════════════════════════
+    // 来源追踪
+    // ═══════════════════════════════════════════
+    async function loadSourceReport(){
+      try{
+        const j = await call("getSourceReport");
+        const r = j.sourceReport;
+        const srcRows = Object.entries(r.bySource||{}).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+        const refRows = Object.entries(r.byReferral||{}).map(([k,v])=>`<tr><td class="mono">${k}</td><td>${v}</td></tr>`).join("");
+        const utmRows = Object.entries(r.byCampaign||{}).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+        $("#sourceBody").innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+            <div>
+              <b>按来源渠道</b>
+              <table><thead><tr><th>渠道</th><th>会话数</th></tr></thead><tbody>${srcRows || '<tr><td colspan="2">暂无数据</td></tr>'}</tbody></table>
+            </div>
+            <div>
+              <b>按分销码</b>
+              <table><thead><tr><th>分销码</th><th>会话数</th></tr></thead><tbody>${refRows || '<tr><td colspan="2">暂无数据</td></tr>'}</tbody></table>
+            </div>
+            <div>
+              <b>按 UTM Campaign</b>
+              <table><thead><tr><th>Campaign</th><th>会话数</th></tr></thead><tbody>${utmRows || '<tr><td colspan="2">暂无数据</td></tr>'}</tbody></table>
+            </div>
+          </div>
+          <div class="small" style="margin-top:8px">总会话数：${r.totalSessions}</div>
+        `;
+      }catch(e){ $("#sourceBody").textContent = "加载失败"; }
+    }
+
+    // ═══════════════════════════════════════════
+    // 量表管理
+    // ═══════════════════════════════════════════
+    let _editingTestId = null;
+
+    async function loadTests(){
+      try{
+        const j = await call("listTests");
+        const rows = j.tests.map(t => `
+          <tr>
+            <td class="mono">${t.id}</td>
+            <td>${t.title}</td>
+            <td>${t.category}</td>
+            <td>${t.questionCount}</td>
+            <td>${t.estimated||"-"} 分钟</td>
+            <td class="row">
+              <button class="btn btn-ghost" data-edit-test="${t.id}">编辑</button>
+              <button class="btn btn-ghost" data-del-test="${t.id}" style="border-color:rgba(176,0,32,.25)">删除</button>
+            </td>
+          </tr>
+        `).join("");
+        $("#testsTbody").innerHTML = rows || `<tr><td colspan="6" class="small">暂无量表</td></tr>`;
+
+        document.querySelectorAll("[data-edit-test]").forEach(btn=>{
+          btn.addEventListener("click", ()=> openTestEditor(btn.dataset.editTest));
+        });
+        document.querySelectorAll("[data-del-test]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            if(!confirm(`确定删除量表 ${btn.dataset.delTest}？`)) return;
+            await call("deleteTest", { id: btn.dataset.delTest });
+            toast("已删除");
+            await loadTests();
+          });
+        });
+      }catch(e){ $("#testsTbody").innerHTML = `<tr><td colspan="6" class="small">加载失败</td></tr>`; }
+    }
+
+    async function openTestEditor(testId){
+      _editingTestId = testId;
+      if(testId){
+        const j = await call("getTest", { id: testId });
+        const t = j.test;
+        $("#testId").value = t.id || "";
+        $("#testId").disabled = true;
+        $("#testTitle").value = t.title || "";
+        $("#testCategory").value = t.category || "";
+        $("#testTags").value = (t.tags||[]).join(", ");
+        $("#testEstimated").value = t.estimated || 10;
+        $("#testIntro").value = t.intro || "";
+        $("#testRule").value = JSON.stringify(t.rule||{}, null, 2);
+        renderQuestionsEditor(t.questions || []);
+        $("#editorTitle").textContent = "编辑量表: " + t.id;
+      } else {
+        $("#testId").value = "";
+        $("#testId").disabled = false;
+        $("#testTitle").value = "";
+        $("#testCategory").value = "";
+        $("#testTags").value = "";
+        $("#testEstimated").value = 10;
+        $("#testIntro").value = "";
+        $("#testRule").value = '{"scale":[0,1,2,3,4],"labels":["没有","轻微","中等","明显","严重"],"bands":[[0,10,"低","建议描述"],[11,22,"中","建议描述"],[23,40,"高","建议描述"]]}';
+        renderQuestionsEditor([]);
+        $("#editorTitle").textContent = "新增量表";
+      }
+      $("#testEditorOverlay").style.display = "block";
+    }
+
+    function renderQuestionsEditor(questions){
+      const container = $("#questionsContainer");
+      container.innerHTML = questions.map((q, i) => {
+        const opts = (q.opts||[]).map((o,oi)=>`<div class="row" style="gap:4px;margin-top:4px"><input class="q-opt-t" data-qi="${i}" data-oi="${oi}" value="${escapeAttr(o.t||"")}" style="flex:2" placeholder="选项文字"/><input class="q-opt-v" data-qi="${i}" data-oi="${oi}" type="number" value="${o.v||0}" style="flex:1;max-width:60px" placeholder="分值"/><button class="btn btn-ghost q-del-opt" data-qi="${i}" data-oi="${oi}" style="padding:4px 8px">×</button></div>`).join("");
+        return `<div class="card" style="margin-bottom:8px;padding:10px" data-qi="${i}">
+          <div class="row" style="gap:6px">
+            <span class="small" style="min-width:30px">#${i+1}</span>
+            <input class="q-text" data-qi="${i}" value="${escapeAttr(q.q||"")}" style="flex:1" placeholder="题目文本"/>
+            <button class="btn btn-ghost q-del" data-qi="${i}" style="border-color:rgba(176,0,32,.25);padding:4px 8px">删题</button>
+          </div>
+          <div class="q-opts-wrap" data-qi="${i}" style="margin-left:36px">${opts}
+            <button class="btn btn-ghost q-add-opt" data-qi="${i}" style="margin-top:4px;font-size:11px">+ 选项</button>
+          </div>
+        </div>`;
+      }).join("") || `<div class="small">暂无题目，点击"添加题目"开始</div>`;
+      bindQuestionEditorEvents();
+    }
+
+    function escapeAttr(s){ return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+    function collectTestFromEditor(){
+      const questions = [];
+      document.querySelectorAll("#questionsContainer > .card").forEach(card => {
+        const qi = card.dataset.qi;
+        const q = card.querySelector(`.q-text[data-qi="${qi}"]`)?.value || "";
+        const opts = [];
+        card.querySelectorAll(`.q-opt-t[data-qi="${qi}"]`).forEach(optInput => {
+          const oi = optInput.dataset.oi;
+          const t = optInput.value;
+          const v = Number(card.querySelector(`.q-opt-v[data-qi="${qi}"][data-oi="${oi}"]`)?.value || 0);
+          opts.push({ t, v });
+        });
+        questions.push({ q, opts });
+      });
+
+      let rule = {};
+      try { rule = JSON.parse($("#testRule").value || "{}"); } catch(e) { toast("评分规则 JSON 格式错误"); return null; }
+
+      return {
+        id: $("#testId").value.trim(),
+        title: $("#testTitle").value.trim(),
+        category: $("#testCategory").value.trim(),
+        tags: $("#testTags").value.split(",").map(s=>s.trim()).filter(Boolean),
+        intro: $("#testIntro").value.trim(),
+        estimated: Number($("#testEstimated").value) || 10,
+        mode: "score",
+        rule,
+        questions,
+      };
+    }
+
+    function bindQuestionEditorEvents(){
+      document.querySelectorAll(".q-del").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const data = collectTestFromEditor();
+          if(!data) return;
+          data.questions.splice(Number(btn.dataset.qi), 1);
+          renderQuestionsEditor(data.questions);
+        });
+      });
+      document.querySelectorAll(".q-del-opt").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const data = collectTestFromEditor();
+          if(!data) return;
+          data.questions[Number(btn.dataset.qi)].opts.splice(Number(btn.dataset.oi), 1);
+          renderQuestionsEditor(data.questions);
+        });
+      });
+      document.querySelectorAll(".q-add-opt").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const data = collectTestFromEditor();
+          if(!data) return;
+          data.questions[Number(btn.dataset.qi)].opts.push({ t: "", v: 0 });
+          renderQuestionsEditor(data.questions);
+        });
+      });
+    }
+
+    async function saveTest(){
+      const data = collectTestFromEditor();
+      if(!data) return;
+      if(!data.id || !data.title){ toast("请填写 ID 和标题"); return; }
+      try{
+        if(_editingTestId){
+          await call("updateTest", { id: _editingTestId, test: data });
+          toast("量表已更新");
+        } else {
+          await call("addTest", { test: data });
+          toast("量表已添加");
+        }
+        $("#testEditorOverlay").style.display = "none";
+        await loadTests();
+      }catch(e){ toast(e.error || "保存失败"); }
+    }
+
+    // ═══════════════════════════════════════════
+    // 分销管理
+    // ═══════════════════════════════════════════
+    async function loadReferrers(){
+      try{
+        const j = await call("listReferrers");
+        const rows = j.referrers.map(r => `
+          <tr>
+            <td class="mono">${r.code}</td>
+            <td>${r.name}</td>
+            <td>${r.commissionPct}%</td>
+            <td>${r.totalOrders||0}</td>
+            <td>${r.disabled ? '<span class="pill danger">停用</span>' : '<span class="pill">活跃</span>'}</td>
+            <td class="row">
+              <button class="btn btn-ghost" data-toggle-ref="${r.code}" data-disabled="${r.disabled?0:1}">${r.disabled?"启用":"停用"}</button>
+              <button class="btn btn-ghost" data-del-ref="${r.code}" style="border-color:rgba(176,0,32,.25)">删除</button>
+            </td>
+          </tr>
+        `).join("");
+        $("#refTbody").innerHTML = rows || `<tr><td colspan="6" class="small">暂无分销员</td></tr>`;
+
+        document.querySelectorAll("[data-toggle-ref]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            await call("toggleReferrer", { code: btn.dataset.toggleRef, disabled: Number(btn.dataset.disabled)===1 });
+            await loadReferrers();
+          });
+        });
+        document.querySelectorAll("[data-del-ref]").forEach(btn=>{
+          btn.addEventListener("click", async ()=>{
+            if(!confirm(`确定删除分销码 ${btn.dataset.delRef}？`)) return;
+            await call("deleteReferrer", { code: btn.dataset.delRef });
+            toast("已删除");
+            await loadReferrers();
+          });
+        });
+      }catch(e){ $("#refTbody").innerHTML = `<tr><td colspan="6" class="small">加载失败</td></tr>`; }
+    }
+
+    async function createReferrer(){
+      const name = $("#refName").value.trim();
+      if(!name){ toast("请填写名称"); return; }
+      const j = await call("createReferrer", {
+        name,
+        commissionPct: Number($("#refCommission").value) || 10,
+        note: $("#refNote").value.trim(),
+      });
+      const refUrl = `${location.origin}/code?ref=${j.referralCode}`;
+      $("#refCreatedBox").innerHTML = `<div class="pill">已创建: <span class="mono">${j.referralCode}</span></div>
+        <div style="margin-top:4px">分销链接: <code class="mono" style="font-size:11px">${refUrl}</code></div>`;
+      await loadReferrers();
+    }
+
+    // ═══════════════════════════════════════════
+    // SEO 设置
+    // ═══════════════════════════════════════════
+    async function loadSeoSettings(){
+      try{
+        const j = await call("getSeoSettings");
+        const s = j.seo;
+        $("#seoTitle").value = s.globalTitle || "";
+        $("#seoDesc").value = s.globalDescription || "";
+        $("#seoKeywords").value = s.globalKeywords || "";
+        $("#seoOgImage").value = s.ogImage || "";
+        $("#seoCanonical").value = s.canonical || "";
+        $("#seoFreq").value = s.sitemapFreq || "weekly";
+        $("#seoAutoSitemap").checked = s.autoSitemap !== false;
+      }catch(e){}
+    }
+
+    async function saveSeoSettings(){
+      await call("updateSeoSettings", {
+        globalTitle: $("#seoTitle").value,
+        globalDescription: $("#seoDesc").value,
+        globalKeywords: $("#seoKeywords").value,
+        ogImage: $("#seoOgImage").value,
+        canonical: $("#seoCanonical").value,
+        sitemapFreq: $("#seoFreq").value,
+        autoSitemap: $("#seoAutoSitemap").checked,
+      });
+      toast("SEO 设置已保存");
+    }
+
     function toast(msg){
       const el = document.createElement("div");
       el.textContent = msg;
@@ -260,6 +686,25 @@ async function destroyExpired(){
     $("#saveSiteBtn")?.addEventListener("click", ()=>saveSiteSettings().catch(e=>toast(e.message||e.error||"保存失败")));
     $("#logoutBtn")?.addEventListener("click", ()=>{
       setToken(""); location.href="/XyJoe7/"; });
+
+    // 量表管理
+    $("#addTestBtn")?.addEventListener("click", ()=>openTestEditor(null));
+    $("#refreshTestsBtn")?.addEventListener("click", ()=>loadTests().catch(e=>toast(e.message||e.error||"刷新失败")));
+    $("#closeEditorBtn")?.addEventListener("click", ()=>{ $("#testEditorOverlay").style.display = "none"; });
+    $("#saveTestBtn")?.addEventListener("click", ()=>saveTest().catch(e=>toast(e.message||e.error||"保存失败")));
+    $("#addQuestionBtn")?.addEventListener("click", ()=>{
+      const data = collectTestFromEditor();
+      if(!data) return;
+      data.questions.push({ q: "", opts: [{ t: "选项A", v: 0 },{ t: "选项B", v: 1 }] });
+      renderQuestionsEditor(data.questions);
+    });
+
+    // 分销管理
+    $("#createRefBtn")?.addEventListener("click", ()=>createReferrer().catch(e=>toast(e.message||e.error||"创建失败")));
+    $("#refreshRefBtn")?.addEventListener("click", ()=>loadReferrers().catch(e=>toast(e.message||e.error||"刷新失败")));
+
+    // SEO 设置
+    $("#saveSeoBtn")?.addEventListener("click", ()=>saveSeoSettings().catch(e=>toast(e.message||e.error||"保存失败")));
 
     // auto refresh
     setAuthedUI(true);

@@ -89,6 +89,9 @@
 .theme-mbti16 .page-title{color:#4c63c7}
 .theme-gad7 .panel,.theme-phq9 .panel{border-color:rgba(199,78,129,.22)}
 
+/* ====== Hide footer on test/scale pages ====== */
+.page-with-bottom-nav .site-footer-block{display:none}
+
 /* ====== Bottom Navigation Bar ====== */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(255,255,255,.92);backdrop-filter:saturate(160%) blur(10px);border-top:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-around;align-items:center;padding:6px 0 env(safe-area-inset-bottom,6px);box-shadow:0 -4px 16px rgba(0,0,0,.04)}
 .bottom-nav a{display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:700;padding:4px 16px;border-radius:8px;transition:.18s ease;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}

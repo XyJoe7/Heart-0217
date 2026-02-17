@@ -351,6 +351,8 @@ function renderHome(test){
     $("#startBtn").addEventListener("click", () => startTest(test, false, variantId));
     const rBtn = $("#resumeBtn");
     if(rBtn) rBtn.addEventListener("click", () => startTest(test, true, variantId));
+    
+    setupDetailsToggle();
     return;
   }
 
@@ -410,6 +412,8 @@ function renderHome(test){
   $("#startBtn").addEventListener("click", () => startTest(test, false, null));
   const r = $("#resumeBtn");
   if(r) r.addEventListener("click", () => startTest(test, true, null));
+  
+  setupDetailsToggle();
 }
 
 function startTest(test, resume, variantId){
@@ -845,6 +849,7 @@ function showResult(test, result, fromHistory=false){
       localStorage.removeItem(keyFor(test.id,"answers"));
       renderHome(test);
     });
+    setupDetailsToggle();
     return;
   }
 
@@ -888,8 +893,8 @@ function showResult(test, result, fromHistory=false){
           </div>
         </details>
 
-        <details class="details">
-          <summary>优势与盲点 <span class="small">（点击展开）</span></summary>
+        <details class="details" open>
+          <summary>优势与盲点 <span class="small">（点击折叠）</span></summary>
           <div class="details-b">
             <b>优势</b>
             <ul style="margin:6px 0 10px;padding-left:18px">${list(main.strength)}</ul>
@@ -898,8 +903,8 @@ function showResult(test, result, fromHistory=false){
           </div>
         </details>
 
-        <details class="details">
-          <summary>关系与工作建议 <span class="small">（点击展开）</span></summary>
+        <details class="details" open>
+          <summary>关系与工作建议 <span class="small">（点击折叠）</span></summary>
           <div class="details-b">
             <b>关系</b><div class="small" style="margin-top:6px">${escapeHtml(main.love||"")}</div>
             <b style="display:block;margin-top:10px">工作</b><div class="small" style="margin-top:6px">${escapeHtml(main.work||"")}</div>
@@ -924,6 +929,7 @@ function showResult(test, result, fromHistory=false){
       localStorage.removeItem(keyFor(test.id,"answers"));
       renderHome(test);
     });
+    setupDetailsToggle();
     return;
   }
 
@@ -989,6 +995,7 @@ function showResult(test, result, fromHistory=false){
       localStorage.removeItem(keyFor(test.id,"answers"));
       renderHome(test);
     });
+    setupDetailsToggle();
     return;
   }
 
@@ -1058,6 +1065,8 @@ function showResult(test, result, fromHistory=false){
     localStorage.removeItem(keyFor(test.id,"answers"));
     renderHome(test);
   });
+  
+  setupDetailsToggle();
 }
 
 function submit(test, answers, ctx){
@@ -1145,6 +1154,17 @@ async function main(){
   }
   renderHome(test);
   bridgeToMiniProgram("open_test", { id: test.id });
+}
+
+function setupDetailsToggle(){
+  document.querySelectorAll('.details').forEach(details => {
+    details.addEventListener('toggle', function() {
+      const summary = this.querySelector('summary .small');
+      if (summary) {
+        summary.textContent = this.open ? '（点击折叠）' : '（点击展开）';
+      }
+    });
+  });
 }
 
 document.addEventListener("DOMContentLoaded", main);

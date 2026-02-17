@@ -15,6 +15,8 @@ function applyAnalyticsCode(code){
 
 
 let _freePreviewQuestions = 3; // default, will be updated from site settings
+let _shareQrUrl = ''; // QR code target URL for share images
+let _shareText = ''; // Text displayed on share images next to QR code
 
 async function loadSiteSettings(){
   try{
@@ -26,6 +28,9 @@ async function loadSiteSettings(){
     const icp = document.getElementById('icpText'); if(icp) icp.textContent = j.settings.icp || icp.textContent;
     applyAnalyticsCode(j.settings.analyticsCode || '');
     if(typeof j.settings.freePreviewQuestions === 'number') _freePreviewQuestions = j.settings.freePreviewQuestions;
+    if(j.settings.shareQrUrl) _shareQrUrl = j.settings.shareQrUrl;
+    if(j.settings.shareText) _shareText = j.settings.shareText;
+    if(j.settings.siteName) SITE.name = j.settings.siteName;
   }catch{}
 }
 const SITE = { name:"心象研究所", sub:"测评 · 性格 · 关系 · 职业", miniProgramReserved:true };
@@ -918,6 +923,7 @@ function showResult(test, result, fromHistory=false){
     `;
 
     $("#panelActions").innerHTML = `
+      <button class="btn btn-primary" id="shareImgBtn" type="button">保存结果图</button>
       <a class="btn btn-ghost" href="#" data-copy="${escapeHtml(share)}">复制链接</a>
       <button class="btn btn-primary" id="againBtn" type="button">再测一次</button>
       <a class="btn btn-ghost" href="/">先回测评库看看</a>
@@ -926,6 +932,10 @@ function showResult(test, result, fromHistory=false){
     document.querySelector('[data-copy]')?.addEventListener("click", async (e) => {
       e.preventDefault();
       try{ await navigator.clipboard.writeText(share); toast("已复制"); }catch{ toast("复制失败"); }
+    });
+    $("#shareImgBtn")?.addEventListener("click", () => {
+      const h = `${result.level}（总均分 ${result.overallMean.toFixed(2)}）`;
+      downloadShareImage(test, h, result.text || "");
     });
     $("#againBtn").addEventListener("click", () => {
       localStorage.removeItem(keyFor(test.id,"progress"));
@@ -998,6 +1008,7 @@ function showResult(test, result, fromHistory=false){
     `;
 
     $("#panelActions").innerHTML = `
+      <button class="btn btn-primary" id="shareImgBtn" type="button">保存结果图</button>
       <a class="btn btn-ghost" href="#" data-copy="${escapeHtml(share)}">复制链接</a>
       <button class="btn btn-primary" id="againBtn" type="button">再测一次</button>
       <a class="btn btn-ghost" href="/">先回测评库看看</a>
@@ -1006,6 +1017,10 @@ function showResult(test, result, fromHistory=false){
     document.querySelector('[data-copy]')?.addEventListener("click", async (e) => {
       e.preventDefault();
       try{ await navigator.clipboard.writeText(share); toast("已复制"); }catch{ toast("复制失败"); }
+    });
+    $("#shareImgBtn")?.addEventListener("click", () => {
+      const h = `${main.icon||""} ${main.name||""}`;
+      downloadShareImage(test, h, result.text || "");
     });
     $("#againBtn").addEventListener("click", () => {
       localStorage.removeItem(keyFor(test.id,"progress"));
@@ -1064,6 +1079,7 @@ function showResult(test, result, fromHistory=false){
     `;
 
     $("#panelActions").innerHTML = `
+      <button class="btn btn-primary" id="shareImgBtn" type="button">保存结果图</button>
       <a class="btn btn-ghost" href="#" data-copy="${escapeHtml(share)}">复制链接</a>
       <button class="btn btn-primary" id="againBtn" type="button">再测一次</button>
       <a class="btn btn-ghost" href="/">先回测评库看看</a>
@@ -1072,6 +1088,9 @@ function showResult(test, result, fromHistory=false){
     document.querySelector('[data-copy]')?.addEventListener("click", async (e) => {
       e.preventDefault();
       try{ await navigator.clipboard.writeText(share); toast("已复制"); }catch{ toast("复制失败"); }
+    });
+    $("#shareImgBtn")?.addEventListener("click", () => {
+      downloadShareImage(test, result.headline || "倾向结果", result.desc || result.text || "");
     });
     $("#againBtn").addEventListener("click", () => {
       localStorage.removeItem(keyFor(test.id,"progress"));
@@ -1125,7 +1144,7 @@ function showResult(test, result, fromHistory=false){
       <h3 class="result-title">${escapeHtml(headline)}</h3>
       <p class="result-text">${escapeHtml(detail)}</p>
       <div class="result-badges">
-        <span class="result-badge">可复制链接分享</span>
+        <span class="result-badge">可保存结果图分享</span>
         <span class="result-badge">可返回重测</span>
         <span class="result-badge">本地历史</span>
       </div>
@@ -1133,6 +1152,7 @@ function showResult(test, result, fromHistory=false){
   `;
 
   $("#panelActions").innerHTML = `
+    <button class="btn btn-primary" id="shareImgBtn" type="button">保存结果图</button>
     <a class="btn btn-ghost" href="#" data-copy="${escapeHtml(share)}">复制链接</a>
     <button class="btn btn-primary" id="againBtn" type="button">再测一次</button>
     <a class="btn btn-ghost" href="/">先回测评库看看</a>
@@ -1141,6 +1161,10 @@ function showResult(test, result, fromHistory=false){
   document.querySelector('[data-copy]')?.addEventListener("click", async (e) => {
     e.preventDefault();
     try{ await navigator.clipboard.writeText(share); toast("已复制"); }catch{ toast("复制失败"); }
+  });
+
+  $("#shareImgBtn")?.addEventListener("click", () => {
+    downloadShareImage(test, headline, detail);
   });
 
   $("#againBtn").addEventListener("click", () => {
@@ -1248,6 +1272,155 @@ function setupDetailsToggle(){
       }
     });
   });
+}
+
+/**
+ * Generate a share image for test results using Canvas API.
+ * Draws a result card with test name, result headline, description,
+ * QR code (loaded from API), and share text.
+ */
+async function generateShareImage(test, headline, detail){
+  const W = 750, H = 1000;
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+
+  // Background gradient
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, "#fdeff9");
+  grad.addColorStop(1, "#ecf0ff");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Card background
+  const cx = 40, cy = 40, cw = W - 80, ch = H - 80;
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  ctx.beginPath();
+  if(ctx.roundRect) { ctx.roundRect(cx, cy, cw, ch, 24); }
+  else { ctx.moveTo(cx+24,cy);ctx.lineTo(cx+cw-24,cy);ctx.quadraticCurveTo(cx+cw,cy,cx+cw,cy+24);ctx.lineTo(cx+cw,cy+ch-24);ctx.quadraticCurveTo(cx+cw,cy+ch,cx+cw-24,cy+ch);ctx.lineTo(cx+24,cy+ch);ctx.quadraticCurveTo(cx,cy+ch,cx,cy+ch-24);ctx.lineTo(cx,cy+24);ctx.quadraticCurveTo(cx,cy,cx+24,cy);ctx.closePath(); }
+  ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.08)";
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Branding
+  ctx.fillStyle = "#7c83fd";
+  ctx.font = "bold 28px ui-sans-serif, system-ui, -apple-system, PingFang SC, Microsoft YaHei, sans-serif";
+  ctx.fillText(SITE.name || "心象研究所", cx + 36, cy + 60);
+
+  // Divider
+  ctx.strokeStyle = "rgba(124,131,253,0.25)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx + 36, cy + 80);
+  ctx.lineTo(cx + cw - 36, cy + 80);
+  ctx.stroke();
+
+  // Test title
+  ctx.fillStyle = "#333";
+  ctx.font = "bold 30px ui-sans-serif, system-ui, -apple-system, PingFang SC, Microsoft YaHei, sans-serif";
+  ctx.fillText("📊 " + (test.title || "测评"), cx + 36, cy + 130);
+
+  // Result headline
+  ctx.fillStyle = "#5a61d0";
+  ctx.font = "bold 38px ui-sans-serif, system-ui, -apple-system, PingFang SC, Microsoft YaHei, sans-serif";
+  wrapText(ctx, headline || "已完成", cx + 36, cy + 200, cw - 72, 48);
+
+  // Result detail
+  ctx.fillStyle = "#666";
+  ctx.font = "24px ui-sans-serif, system-ui, -apple-system, PingFang SC, Microsoft YaHei, sans-serif";
+  const detailY = cy + 280;
+  wrapText(ctx, detail || "", cx + 36, detailY, cw - 72, 36);
+
+  // QR code area
+  const qrSize = 160;
+  const qrX = cx + cw - 36 - qrSize;
+  const qrY = cy + ch - 36 - qrSize - 60;
+  const shareText = _shareText || "扫码体验同款测评";
+  const qrUrl = _shareQrUrl || location.origin;
+
+  // Load QR code image
+  try {
+    const qrImg = await loadImage(`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrUrl)}`);
+    // QR code white background
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+    ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+  } catch {
+    // Fallback: draw a placeholder box with URL text
+    ctx.fillStyle = "#f5f5f5";
+    ctx.fillRect(qrX, qrY, qrSize, qrSize);
+    ctx.strokeStyle = "rgba(0,0,0,0.15)";
+    ctx.strokeRect(qrX, qrY, qrSize, qrSize);
+    ctx.fillStyle = "#999";
+    ctx.font = "16px ui-sans-serif, system-ui, sans-serif";
+    ctx.fillText("二维码", qrX + qrSize/2 - 24, qrY + qrSize/2);
+  }
+
+  // Share text next to QR code
+  ctx.fillStyle = "#333";
+  ctx.font = "bold 22px ui-sans-serif, system-ui, -apple-system, PingFang SC, Microsoft YaHei, sans-serif";
+  const textMaxW = qrX - cx - 72;
+  wrapText(ctx, shareText, cx + 36, qrY + 30, textMaxW, 32);
+
+  // QR URL hint
+  ctx.fillStyle = "#999";
+  ctx.font = "18px ui-sans-serif, system-ui, sans-serif";
+  ctx.fillText(qrUrl, cx + 36, qrY + qrSize - 10);
+
+  // Disclaimer
+  ctx.fillStyle = "#aaa";
+  ctx.font = "18px ui-sans-serif, system-ui, sans-serif";
+  ctx.fillText("仅供自我觉察，不构成医疗建议或诊断依据", cx + 36, cy + ch - 30);
+
+  return canvas;
+}
+
+/** Helper: wrap text in canvas */
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const chars = String(text).split("");
+  let line = "";
+  let curY = y;
+  for(let i = 0; i < chars.length; i++){
+    const testLine = line + chars[i];
+    if(ctx.measureText(testLine).width > maxWidth && line){
+      ctx.fillText(line, x, curY);
+      line = chars[i];
+      curY += lineHeight;
+    } else {
+      line = testLine;
+    }
+  }
+  if(line) ctx.fillText(line, x, curY);
+  return curY;
+}
+
+/** Helper: load an image and return a promise */
+function loadImage(src){
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    setTimeout(() => reject(new Error("timeout")), 5000);
+    img.src = src;
+  });
+}
+
+/** Download the share image */
+async function downloadShareImage(test, headline, detail){
+  try {
+    toast("正在生成图片…");
+    const canvas = await generateShareImage(test, headline, detail);
+    const link = document.createElement("a");
+    link.download = `${test.title || "测评结果"}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+    toast("图片已保存");
+  } catch(e) {
+    toast("生成失败，请尝试复制链接");
+  }
 }
 
 document.addEventListener("DOMContentLoaded", main);

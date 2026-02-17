@@ -208,6 +208,8 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $existing['faq'] = trim(strval($in['faq'] ?? '/faq/'));
     $existing['sitemap'] = trim(strval($in['sitemap'] ?? '/sitemap-page/'));
     $existing['analyticsCode'] = strval($in['analyticsCode'] ?? '');
+    $existing['shareQrUrl'] = trim(strval($in['shareQrUrl'] ?? ''));
+    $existing['shareText'] = trim(strval($in['shareText'] ?? ''));
     save_json_file_atomic($path, $existing);
     return ['ok'=>true,'settings'=>$existing];
   }

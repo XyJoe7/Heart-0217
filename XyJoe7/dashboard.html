@@ -328,6 +328,13 @@
               <label class="small" style="flex:1 1 220px">ICP备案号<br/><input id="siteIcp" style="width:100%"/></label>
               <label class="small" style="flex:1 1 220px">统计代码（可选，支持 script 或纯文本）<br/><textarea id="siteAnalytics" style="width:100%;min-height:88px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
             </div>
+            <hr style="border:none;border-top:1px solid rgba(0,0,0,.08);margin:14px 0"/>
+            <h4 style="margin:0 0 8px">📤 分享图片设置</h4>
+            <div class="small" style="margin-bottom:10px;color:var(--muted)">测评完成后，用户可保存结果为图片分享。以下字段控制图片上的二维码和文案。</div>
+            <div class="row" style="gap:14px 10px">
+              <label class="small" style="flex:1 1 220px">二维码链接（扫码后打开的地址，留空则使用站点首页）<br/><input id="shareQrUrl" style="width:100%" placeholder="https://example.com"/></label>
+              <label class="small" style="flex:1 1 220px">分享图片文案（显示在二维码旁边）<br/><input id="shareText" style="width:100%" placeholder="扫码体验同款测评"/></label>
+            </div>
             <div class="row" style="margin-top:10px">
               <button class="btn btn-primary" id="saveSiteBtn">保存站点信息</button>
             </div>
@@ -673,6 +680,8 @@
       $("#siteSub").value = j.settings.siteSub || "";
       $("#siteIcp").value = j.settings.icp || "";
       $("#siteAnalytics").value = j.settings.analyticsCode || "";
+      $("#shareQrUrl").value = j.settings.shareQrUrl || "";
+      $("#shareText").value = j.settings.shareText || "";
     }
 
     async function saveSiteSettings(){
@@ -680,7 +689,9 @@
         siteName: $("#siteName").value,
         siteSub: $("#siteSub").value,
         icp: $("#siteIcp").value,
-        analyticsCode: $("#siteAnalytics").value
+        analyticsCode: $("#siteAnalytics").value,
+        shareQrUrl: $("#shareQrUrl").value,
+        shareText: $("#shareText").value
       });
       toast("站点信息已保存");
     }

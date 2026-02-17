@@ -7,12 +7,16 @@
   <link rel="stylesheet" href="/assets/style.css" />
   <link rel="stylesheet" href="/assets/pages.css" />
   <style>
+    body{margin:0;display:flex;flex-direction:column;min-height:100vh}
+    .admin-layout{display:flex;flex:1;overflow:hidden}
+    .admin-sidebar{width:220px;background:rgba(255,255,255,.92);border-right:1px solid rgba(0,0,0,.08);overflow-y:auto;flex-shrink:0}
+    .admin-main{flex:1;overflow-y:auto;background:linear-gradient(135deg,var(--bg1),var(--bg2))}
     .wrap{max-width:1180px;margin:0 auto;padding:24px 16px}
     .login-center{display:flex;justify-content:center;margin:8px 0 14px}
     .login-card{width:min(560px,100%);text-align:center}
     .grid{display:grid;grid-template-columns:1fr;gap:14px;max-width:1080px;margin:0 auto}
     @media (max-width:900px){.grid{grid-template-columns:1fr}}
-    .card{border-radius:18px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.88);padding:14px}
+    .card{border-radius:18px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.88);padding:14px;margin-bottom:14px}
     .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     input,select{border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px 12px;font-size:14px;outline:none;background:#fff}
     table{width:100%;border-collapse:collapse}
@@ -24,198 +28,381 @@
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
     .disabled-area{opacity:.58;position:relative;pointer-events:none}
     .disabled-area::after{content:"登录后可操作";position:absolute;right:12px;top:10px;font-size:12px;color:#7a2f56;background:#fff;border:1px solid rgba(0,0,0,.08);padding:3px 8px;border-radius:999px}
+    
+    /* Sidebar Menu Styles */
+    .menu-category{padding:20px 16px 8px;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+    .menu-item{display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:.18s ease;text-decoration:none;color:var(--text);border-left:3px solid transparent}
+    .menu-item:hover{background:rgba(124,131,253,.08)}
+    .menu-item.active{background:linear-gradient(to right,rgba(124,131,253,.12),transparent);border-left-color:var(--primary);font-weight:700}
+    .menu-item svg{width:18px;height:18px;flex-shrink:0}
+    .menu-separator{height:1px;background:rgba(0,0,0,.06);margin:8px 16px}
+    
+    /* Content Sections */
+    .content-section{display:none}
+    .content-section.active{display:block}
+    
+    @media (max-width:768px){
+      .admin-layout{flex-direction:column}
+      .admin-sidebar{width:100%;border-right:0;border-bottom:1px solid rgba(0,0,0,.08);max-height:200px}
+      .menu-category{padding:12px 16px 6px}
+      .menu-item{padding:8px 16px}
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <a class="brand" href="/"><span class="logo">🗝️</span><span>XyJoe7 控制台</span></a>
+      <a class="brand" href="/"><span class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+      </span><span>管理控制台</span></a>
       <div class="topbar-actions">
-        <button class="btn btn-ghost" id="logoutBtn">退出</button>
+        <button class="btn btn-ghost" id="logoutBtn" style="display:none">退出</button>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
-    <div id="authTip" class="card" style="margin-bottom:12px">
-      <b>安全提示：</b>你已登录，可在下方管理激活码、站点展示字段与统计代码。
-    </div>
-    <div class="grid" id="adminGrid" style="display:none">
-      <section class="card" id="dashboardCard">
-        <div class="row" style="justify-content:space-between">
-          <div>
-            <h3 style="margin:0 0 6px">激活码列表</h3>
+  <div id="authTip" class="card" style="margin:12px auto;max-width:1180px">
+    <b>安全提示：</b>你已登录，可在下方管理激活码、站点展示字段与统计代码。
+  </div>
+
+  <div class="admin-layout" id="adminLayout" style="display:none">
+    <!-- Left Sidebar Menu -->
+    <aside class="admin-sidebar">
+      <div class="menu-category">仪表盘</div>
+      <a class="menu-item active" data-section="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>数据概览</span>
+      </a>
+      
+      <div class="menu-separator"></div>
+      <div class="menu-category">激活码管理</div>
+      <a class="menu-item" data-section="codes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        <span>激活码列表</span>
+      </a>
+      
+      <div class="menu-separator"></div>
+      <div class="menu-category">内容管理</div>
+      <a class="menu-item" data-section="carousel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 3h2a2 2 0 0 1 2 2v2M8 3H6a2 2 0 0 0-2 2v2"></path>
+        </svg>
+        <span>轮播图管理</span>
+      </a>
+      <a class="menu-item" data-section="featured">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        <span>精选内容</span>
+      </a>
+      <a class="menu-item" data-section="tests">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        <span>量表管理</span>
+      </a>
+      
+      <div class="menu-separator"></div>
+      <div class="menu-category">系统设置</div>
+      <a class="menu-item" data-section="site">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span>站点信息</span>
+      </a>
+      <a class="menu-item" data-section="seo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <span>SEO设置</span>
+      </a>
+      
+      <div class="menu-separator"></div>
+      <div class="menu-category">运营分析</div>
+      <a class="menu-item" data-section="analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="20" x2="12" y2="10"></line>
+          <line x1="18" y1="20" x2="18" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="16"></line>
+        </svg>
+        <span>数据分析</span>
+      </a>
+      <a class="menu-item" data-section="source">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+          <circle cx="12" cy="10" r="3"></circle>
+        </svg>
+        <span>来源追踪</span>
+      </a>
+      <a class="menu-item" data-section="referral">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+        </svg>
+        <span>分销管理</span>
+      </a>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="admin-main">
+      <div class="wrap">
+        
+        <!-- Dashboard Overview Section -->
+        <div class="content-section active" id="section-dashboard">
+          <section class="card">
+            <h3 style="margin:0 0 10px">📊 数据概览</h3>
             <div class="small" id="stats"></div>
-          </div>
-          <div class="row">
-            <input id="q" placeholder="搜索 code..." />
-            <button class="btn btn-ghost" id="refreshBtn">刷新</button>
-          </div>
+          </section>
         </div>
 
-        <div style="overflow:auto;margin-top:10px">
-          <table>
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>状态</th>
-                <th>使用</th>
-                <th>过期</th>
-                <th>激活有效期</th>
-                <th>备注</th>
-                <th>操作</th>
-              </tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
-      </section>
-      <section class="card" id="manageBox">
-        <h3 style="margin:0 0 10px">批量生成激活码</h3>
-        <div class="row" style="gap:14px 10px">
-          <label class="small" style="flex:1 1 120px">数量<br/><input id="count" type="number" min="1" max="500" value="20" style="width:100%"/></label>
-          <label class="small" style="flex:1 1 120px">前缀<br/><input id="prefix" value="H" style="width:100%"/></label>
-          <label class="small" style="flex:1 1 140px">每码可用次数<br/><input id="maxUses" type="number" min="1" value="1" style="width:100%"/></label>
-          <label class="small" style="flex:1 1 140px">激活后有效天数<br/><input id="grantDays" type="number" min="1" value="3" style="width:100%"/></label>
-        </div>
-        <div class="row" style="gap:14px 10px;margin-top:10px">
-          <label class="small" style="flex:1 1 220px">备注（可选）<br/><input id="note" style="width:100%" placeholder="如：2月活动批次"/></label>
-          <label class="small" style="flex:1 1 220px">码本身过期时间（可选）<br/><input id="expiresAt" type="datetime-local" style="width:100%"/></label>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="btn btn-primary" id="createBtn">生成激活码</button>
-          <button class="btn btn-ghost" id="destroyExpiredBtn">清理已过期激活码</button>
-        </div>
-        <div id="createdBox" class="small" style="margin-top:10px"></div>
-      </section>
-      <section class="card" id="siteCard" style="display:none;margin-top:14px">
-      <h3 style="margin:0 0 10px">站点信息设置</h3>
-      <div class="row" style="gap:14px 10px">
-        <label class="small" style="flex:1 1 220px">站点名称<br/><input id="siteName" style="width:100%"/></label>
-        <label class="small" style="flex:1 1 220px">副标题<br/><input id="siteSub" style="width:100%"/></label>
-      </div>
-      <div class="row" style="gap:14px 10px;margin-top:10px">
-        <label class="small" style="flex:1 1 220px">ICP备案号<br/><input id="siteIcp" style="width:100%"/></label>
-        <label class="small" style="flex:1 1 220px">统计代码（可选，支持 script 或纯文本）<br/><textarea id="siteAnalytics" style="width:100%;min-height:88px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn btn-primary" id="saveSiteBtn">保存站点信息</button>
-      </div>
-    </section>
+        <!-- Activation Codes Section -->
+        <div class="content-section" id="section-codes">
+          <section class="card" id="dashboardCard">
+            <div class="row" style="justify-content:space-between">
+              <div>
+                <h3 style="margin:0 0 6px">激活码列表</h3>
+              </div>
+              <div class="row">
+                <input id="q" placeholder="搜索 code..." />
+                <button class="btn btn-ghost" id="refreshBtn">刷新</button>
+              </div>
+            </div>
 
-      <!-- ═══ 运营数据汇总 ═══ -->
-      <section class="card" id="analyticsCard" style="display:none;margin-top:14px">
-        <h3 style="margin:0 0 10px">📊 实时运营数据</h3>
-        <div id="analyticsBody" class="small">加载中…</div>
-      </section>
-
-      <!-- ═══ 来源追踪 ═══ -->
-      <section class="card" id="sourceCard" style="display:none;margin-top:14px">
-        <h3 style="margin:0 0 10px">📍 用户来源追踪</h3>
-        <div id="sourceBody" class="small">加载中…</div>
-      </section>
-
-      <!-- ═══ 量表管理 ═══ -->
-      <section class="card" id="testsCard" style="display:none;margin-top:14px">
-        <div class="row" style="justify-content:space-between">
-          <h3 style="margin:0">📝 量表管理</h3>
-          <div class="row">
-            <button class="btn btn-primary" id="addTestBtn">新增量表</button>
-            <button class="btn btn-ghost" id="refreshTestsBtn">刷新</button>
-          </div>
+            <div style="overflow:auto;margin-top:10px">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>状态</th>
+                    <th>使用</th>
+                    <th>过期</th>
+                    <th>激活有效期</th>
+                    <th>备注</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </section>
+          
+          <section class="card" id="manageBox" style="margin-top:14px">
+            <h3 style="margin:0 0 10px">批量生成激活码</h3>
+            <div class="row" style="gap:14px 10px">
+              <label class="small" style="flex:1 1 120px">数量<br/><input id="count" type="number" min="1" max="500" value="20" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 120px">前缀<br/><input id="prefix" value="H" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 140px">每码可用次数<br/><input id="maxUses" type="number" min="1" value="1" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 140px">激活后有效天数<br/><input id="grantDays" type="number" min="1" value="3" style="width:100%"/></label>
+            </div>
+            <div class="row" style="gap:14px 10px;margin-top:10px">
+              <label class="small" style="flex:1 1 220px">备注（可选）<br/><input id="note" style="width:100%" placeholder="如：2月活动批次"/></label>
+              <label class="small" style="flex:1 1 220px">码本身过期时间（可选）<br/><input id="expiresAt" type="datetime-local" style="width:100%"/></label>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" id="createBtn">生成激活码</button>
+              <button class="btn btn-ghost" id="destroyExpiredBtn">清理已过期激活码</button>
+            </div>
+            <div id="createdBox" class="small" style="margin-top:10px"></div>
+          </section>
         </div>
-        <div style="overflow:auto;margin-top:10px">
-          <table>
-            <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>题数</th><th>预计时间</th><th>操作</th></tr></thead>
-            <tbody id="testsTbody"></tbody>
-          </table>
-        </div>
-      </section>
 
-      <!-- ═══ 量表编辑弹窗 ═══ -->
-      <div id="testEditorOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);overflow-y:auto">
-        <div style="max-width:900px;margin:40px auto;padding:20px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
-          <div class="row" style="justify-content:space-between">
-            <h3 style="margin:0" id="editorTitle">编辑量表</h3>
-            <button class="btn btn-ghost" id="closeEditorBtn">关闭</button>
-          </div>
-          <div style="margin-top:14px">
-            <div class="row" style="gap:10px">
-              <label class="small" style="flex:1">ID（小写字母/数字/横线）<br/><input id="testId" style="width:100%" placeholder="例: gad7"/></label>
-              <label class="small" style="flex:2">标题<br/><input id="testTitle" style="width:100%" placeholder="例: GAD-7 广泛性焦虑评估"/></label>
+        <!-- Carousel Management Section -->
+        <div class="content-section" id="section-carousel">
+          <section class="card">
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:0">🎞️ 轮播图管理</h3>
+              <div class="row">
+                <button class="btn btn-primary" id="addCarouselBtn">添加轮播</button>
+                <button class="btn btn-ghost" id="refreshCarouselBtn">刷新</button>
+              </div>
+            </div>
+            <div id="carouselList" style="margin-top:14px"></div>
+          </section>
+        </div>
+
+        <!-- Featured Content Section -->
+        <div class="content-section" id="section-featured">
+          <section class="card">
+            <h3 style="margin:0 0 10px">⭐ 精选内容管理</h3>
+            <div class="row" style="gap:14px;margin-top:10px">
+              <label class="small" style="flex:1">热门推荐 ID（逗号分隔）<br/><input id="featuredHot" style="width:100%" placeholder="例: test1,test2,test3"/></label>
+            </div>
+            <div class="row" style="gap:14px;margin-top:10px">
+              <label class="small" style="flex:1">最新上线 ID（逗号分隔）<br/><input id="featuredNew" style="width:100%" placeholder="例: test4,test5"/></label>
+            </div>
+            <div class="row" style="gap:14px;margin-top:10px">
+              <label class="small" style="flex:1">编辑推荐 ID（逗号分隔）<br/><input id="featuredRecommended" style="width:100%" placeholder="例: test6,test7"/></label>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" id="saveFeaturedBtn">保存精选内容</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Tests Management Section -->
+        <div class="content-section" id="section-tests">
+          <section class="card">
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:0">📝 量表管理</h3>
+              <div class="row">
+                <button class="btn btn-primary" id="addTestBtn">新增量表</button>
+                <button class="btn btn-ghost" id="refreshTestsBtn">刷新</button>
+              </div>
+            </div>
+            <div style="overflow:auto;margin-top:10px">
+              <table>
+                <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>题数</th><th>预计时间</th><th>操作</th></tr></thead>
+                <tbody id="testsTbody"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <!-- Site Settings Section -->
+        <div class="content-section" id="section-site">
+          <section class="card">
+            <h3 style="margin:0 0 10px">🌐 站点信息设置</h3>
+            <div class="row" style="gap:14px 10px">
+              <label class="small" style="flex:1 1 220px">站点名称<br/><input id="siteName" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 220px">副标题<br/><input id="siteSub" style="width:100%"/></label>
+            </div>
+            <div class="row" style="gap:14px 10px;margin-top:10px">
+              <label class="small" style="flex:1 1 220px">ICP备案号<br/><input id="siteIcp" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 220px">统计代码（可选，支持 script 或纯文本）<br/><textarea id="siteAnalytics" style="width:100%;min-height:88px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" id="saveSiteBtn">保存站点信息</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- SEO Settings Section -->
+        <div class="content-section" id="section-seo">
+          <section class="card">
+            <h3 style="margin:0 0 10px">🔍 SEO 优化设置</h3>
+            <div class="row" style="gap:14px 10px">
+              <label class="small" style="flex:1 1 220px">全局标题（title）<br/><input id="seoTitle" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 220px">全局描述（description）<br/><textarea id="seoDesc" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+            </div>
+            <div class="row" style="gap:14px 10px;margin-top:10px">
+              <label class="small" style="flex:1 1 220px">全局关键词（keywords）<br/><input id="seoKeywords" style="width:100%"/></label>
+              <label class="small" style="flex:1 1 220px">OG 图片 URL<br/><input id="seoOgImage" style="width:100%"/></label>
+            </div>
+            <div class="row" style="gap:14px 10px;margin-top:10px">
+              <label class="small" style="flex:1 1 220px">网站域名（含 https://）<br/><input id="seoCanonical" style="width:100%" placeholder="https://example.com"/></label>
+              <label class="small" style="flex:1 1 140px">Sitemap 更新频率<br/>
+                <select id="seoFreq" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px">
+                  <option value="daily">每天</option>
+                  <option value="weekly" selected>每周</option>
+                  <option value="monthly">每月</option>
+                </select>
+              </label>
+              <label class="small" style="flex:1 1 160px;display:flex;align-items:center;gap:8px;margin-top:18px">
+                <input type="checkbox" id="seoAutoSitemap" checked/> 自动生成 sitemap.xml
+              </label>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button class="btn btn-primary" id="saveSeoBtn">保存 SEO 设置</button>
+            </div>
+          </section>
+        </div>
+
+        <!-- Analytics Section -->
+        <div class="content-section" id="section-analytics">
+          <section class="card">
+            <h3 style="margin:0 0 10px">📊 实时运营数据</h3>
+            <div id="analyticsBody" class="small">加载中…</div>
+          </section>
+        </div>
+
+        <!-- Source Tracking Section -->
+        <div class="content-section" id="section-source">
+          <section class="card">
+            <h3 style="margin:0 0 10px">📍 用户来源追踪</h3>
+            <div id="sourceBody" class="small">加载中…</div>
+          </section>
+        </div>
+
+        <!-- Referral Management Section -->
+        <div class="content-section" id="section-referral">
+          <section class="card">
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:0">🔗 分销管理</h3>
+              <button class="btn btn-ghost" id="refreshRefBtn">刷新</button>
             </div>
             <div class="row" style="gap:10px;margin-top:10px">
-              <label class="small" style="flex:1">分类<br/><input id="testCategory" style="width:100%" placeholder="例: 情绪量表"/></label>
-              <label class="small" style="flex:1">标签（逗号分隔）<br/><input id="testTags" style="width:100%" placeholder="例: 焦虑,情绪"/></label>
-              <label class="small" style="flex:1">预计时间（分钟）<br/><input id="testEstimated" type="number" style="width:100%" value="10"/></label>
+              <label class="small" style="flex:1">分销员名称<br/><input id="refName" style="width:100%" placeholder="例: 张三"/></label>
+              <label class="small" style="flex:1">佣金比例 (%)<br/><input id="refCommission" type="number" min="0" max="100" value="10" style="width:100%"/></label>
+              <label class="small" style="flex:1">备注<br/><input id="refNote" style="width:100%"/></label>
+              <div style="align-self:flex-end"><button class="btn btn-primary" id="createRefBtn">创建分销码</button></div>
             </div>
-            <label class="small" style="display:block;margin-top:10px">简介<br/><textarea id="testIntro" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
-            <label class="small" style="display:block;margin-top:10px">评分规则 JSON<br/><textarea id="testRule" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace;font-size:12px"></textarea></label>
-            <div style="margin-top:14px">
-              <div class="row" style="justify-content:space-between">
-                <h4 style="margin:0">题目列表</h4>
-                <button class="btn btn-ghost" id="addQuestionBtn">+ 添加题目</button>
-              </div>
-              <div id="questionsContainer" style="margin-top:10px;max-height:400px;overflow-y:auto"></div>
+            <div id="refCreatedBox" class="small" style="margin-top:8px"></div>
+            <div style="overflow:auto;margin-top:10px">
+              <table>
+                <thead><tr><th>分销码</th><th>名称</th><th>佣金</th><th>订单数</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody id="refTbody"></tbody>
+              </table>
             </div>
-            <div class="row" style="margin-top:14px">
-              <button class="btn btn-primary" id="saveTestBtn">保存量表</button>
-            </div>
-          </div>
+          </section>
         </div>
-      </div>
 
-      <!-- ═══ 分销管理 ═══ -->
-      <section class="card" id="referralCard" style="display:none;margin-top:14px">
-        <div class="row" style="justify-content:space-between">
-          <h3 style="margin:0">🔗 分销管理</h3>
-          <button class="btn btn-ghost" id="refreshRefBtn">刷新</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Test Editor Overlay (Global) -->
+  <div id="testEditorOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);overflow-y:auto">
+    <div style="max-width:900px;margin:40px auto;padding:20px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+      <div class="row" style="justify-content:space-between">
+        <h3 style="margin:0" id="editorTitle">编辑量表</h3>
+        <button class="btn btn-ghost" id="closeEditorBtn">关闭</button>
+      </div>
+      <div style="margin-top:14px">
+        <div class="row" style="gap:10px">
+          <label class="small" style="flex:1">ID（小写字母/数字/横线）<br/><input id="testId" style="width:100%" placeholder="例: gad7"/></label>
+          <label class="small" style="flex:2">标题<br/><input id="testTitle" style="width:100%" placeholder="例: GAD-7 广泛性焦虑评估"/></label>
         </div>
         <div class="row" style="gap:10px;margin-top:10px">
-          <label class="small" style="flex:1">分销员名称<br/><input id="refName" style="width:100%" placeholder="例: 张三"/></label>
-          <label class="small" style="flex:1">佣金比例 (%)<br/><input id="refCommission" type="number" min="0" max="100" value="10" style="width:100%"/></label>
-          <label class="small" style="flex:1">备注<br/><input id="refNote" style="width:100%"/></label>
-          <div style="align-self:flex-end"><button class="btn btn-primary" id="createRefBtn">创建分销码</button></div>
+          <label class="small" style="flex:1">分类<br/><input id="testCategory" style="width:100%" placeholder="例: 情绪量表"/></label>
+          <label class="small" style="flex:1">标签（逗号分隔）<br/><input id="testTags" style="width:100%" placeholder="例: 焦虑,情绪"/></label>
+          <label class="small" style="flex:1">预计时间（分钟）<br/><input id="testEstimated" type="number" style="width:100%" value="10"/></label>
         </div>
-        <div id="refCreatedBox" class="small" style="margin-top:8px"></div>
-        <div style="overflow:auto;margin-top:10px">
-          <table>
-            <thead><tr><th>分销码</th><th>名称</th><th>佣金</th><th>订单数</th><th>状态</th><th>操作</th></tr></thead>
-            <tbody id="refTbody"></tbody>
-          </table>
+        <label class="small" style="display:block;margin-top:10px">简介<br/><textarea id="testIntro" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+        <label class="small" style="display:block;margin-top:10px">评分规则 JSON<br/><textarea id="testRule" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace;font-size:12px"></textarea></label>
+        <div style="margin-top:14px">
+          <div class="row" style="justify-content:space-between">
+            <h4 style="margin:0">题目列表</h4>
+            <button class="btn btn-ghost" id="addQuestionBtn">+ 添加题目</button>
+          </div>
+          <div id="questionsContainer" style="margin-top:10px;max-height:400px;overflow-y:auto"></div>
         </div>
-      </section>
-
-      <!-- ═══ SEO 设置 ═══ -->
-      <section class="card" id="seoCard" style="display:none;margin-top:14px">
-        <h3 style="margin:0 0 10px">🔍 SEO 优化设置</h3>
-        <div class="row" style="gap:14px 10px">
-          <label class="small" style="flex:1 1 220px">全局标题（title）<br/><input id="seoTitle" style="width:100%"/></label>
-          <label class="small" style="flex:1 1 220px">全局描述（description）<br/><textarea id="seoDesc" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+        <div class="row" style="margin-top:14px">
+          <button class="btn btn-primary" id="saveTestBtn">保存量表</button>
         </div>
-        <div class="row" style="gap:14px 10px;margin-top:10px">
-          <label class="small" style="flex:1 1 220px">全局关键词（keywords）<br/><input id="seoKeywords" style="width:100%"/></label>
-          <label class="small" style="flex:1 1 220px">OG 图片 URL<br/><input id="seoOgImage" style="width:100%"/></label>
-        </div>
-        <div class="row" style="gap:14px 10px;margin-top:10px">
-          <label class="small" style="flex:1 1 220px">网站域名（含 https://）<br/><input id="seoCanonical" style="width:100%" placeholder="https://example.com"/></label>
-          <label class="small" style="flex:1 1 140px">Sitemap 更新频率<br/>
-            <select id="seoFreq" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px">
-              <option value="daily">每天</option>
-              <option value="weekly" selected>每周</option>
-              <option value="monthly">每月</option>
-            </select>
-          </label>
-          <label class="small" style="flex:1 1 160px;display:flex;align-items:center;gap:8px;margin-top:18px">
-            <input type="checkbox" id="seoAutoSitemap" checked/> 自动生成 sitemap.xml
-          </label>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="btn btn-primary" id="saveSeoBtn">保存 SEO 设置</button>
-        </div>
-      </section>
-
-  </main>
+      </div>
+    </div>
+  </div>
 
   <script>
     const API = "/api/admin.php";
@@ -228,27 +415,51 @@
       return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     };
 
+    // Global HTML escaping utility
+    function escapeHtml(str){
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
     function getToken(){ return localStorage.getItem(stKey) || ""; }
     function setAuthedUI(ok){
-      const wrap=document.getElementById("adminGrid");
-      const site=document.getElementById("siteCard");
-      const box=document.getElementById("dashboardCard");
-      const tip=document.getElementById("authTip");
-      const manage=document.getElementById("manageBox");
-      if(wrap) wrap.style.display = ok ? "grid" : "none";
-      if(site) site.style.display = ok ? "block" : "none";
-      if(box) box.classList.toggle("disabled-area", !ok);
-      if(manage) manage.classList.toggle("disabled-area", !ok);
+      const layout = document.getElementById("adminLayout");
+      const tip = document.getElementById("authTip");
+      if(layout) layout.style.display = ok ? "flex" : "none";
       if(tip) tip.style.display = "none";
-      const logout=document.getElementById("logoutBtn");
+      const logout = document.getElementById("logoutBtn");
       if(logout) logout.style.display = ok ? "" : "none";
-      // New sections
-      ["analyticsCard","sourceCard","testsCard","referralCard","seoCard"].forEach(id=>{
-        const el = document.getElementById(id);
-        if(el) el.style.display = ok ? "block" : "none";
-      });
     }
     function setToken(t){ if(t) localStorage.setItem(stKey,t); else localStorage.removeItem(stKey); }
+
+    // ═══════════════════════════════════════════
+    // Sidebar Navigation
+    // ═══════════════════════════════════════════
+    function initSidebarNavigation(){
+      document.querySelectorAll(".menu-item").forEach(item => {
+        item.addEventListener("click", (e) => {
+          e.preventDefault();
+          const section = item.dataset.section;
+          if(!section) return;
+          
+          // Hide all sections
+          document.querySelectorAll(".content-section").forEach(s => s.classList.remove("active"));
+          
+          // Show selected section
+          const targetSection = document.getElementById(`section-${section}`);
+          if(targetSection) targetSection.classList.add("active");
+          
+          // Update menu active state
+          document.querySelectorAll(".menu-item").forEach(m => m.classList.remove("active"));
+          item.classList.add("active");
+          
+          // Load section data if needed
+          if(section === "carousel") loadCarousel();
+          if(section === "featured") loadFeaturedContent();
+        });
+      });
+    }
 
     async function call(action, payload={}){
       const body = { action, ...payload };
@@ -672,6 +883,124 @@ async function destroyExpired(){
       toast("SEO 设置已保存");
     }
 
+    // ═══════════════════════════════════════════
+    // Carousel Management
+    // ═══════════════════════════════════════════
+    let _carouselData = [];
+    
+    async function loadCarousel(){
+      try{
+        const j = await call("getCarousel");
+        _carouselData = j.carousel || [];
+        renderCarousel();
+      }catch(e){ 
+        $("#carouselList").innerHTML = `<div class="small">加载失败</div>`;
+      }
+    }
+    
+    function renderCarousel(){
+      const list = $("#carouselList");
+      if(_carouselData.length === 0){
+        list.innerHTML = `<div class="small">暂无轮播图，点击"添加轮播"开始</div>`;
+        return;
+      }
+      
+      list.innerHTML = _carouselData.map((slide, idx) => {
+        const escTitle = escapeHtml(slide.title || "无标题");
+        const escDesc = escapeHtml(slide.description || "");
+        const escLink = escapeHtml(slide.link || "-");
+        const escImage = escapeHtml(slide.image || "");
+        const escAlt = escapeHtml(slide.title || "轮播图");
+        return `
+        <div class="card" style="margin-bottom:10px;padding:12px">
+          <div class="row" style="gap:10px;align-items:start">
+            <img src="${escImage}" alt="${escAlt}" style="width:120px;height:80px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'"/>
+            <div style="flex:1">
+              <div class="row" style="justify-content:space-between">
+                <b>${escTitle}</b>
+                <div class="row">
+                  <button class="btn btn-ghost" data-edit-carousel="${idx}" style="padding:4px 8px">编辑</button>
+                  <button class="btn btn-ghost" data-del-carousel="${idx}" style="padding:4px 8px;border-color:rgba(176,0,32,.25)">删除</button>
+                </div>
+              </div>
+              <div class="small" style="margin-top:4px">${escDesc}</div>
+              <div class="small" style="margin-top:4px">链接: <span class="mono">${escLink}</span></div>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join("");
+      
+      document.querySelectorAll("[data-edit-carousel]").forEach(btn=>{
+        btn.addEventListener("click", ()=> editCarouselSlide(Number(btn.dataset.editCarousel)));
+      });
+      document.querySelectorAll("[data-del-carousel]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          if(!confirm("确定删除此轮播？")) return;
+          _carouselData.splice(Number(btn.dataset.delCarousel), 1);
+          await saveCarousel();
+        });
+      });
+    }
+    
+    function editCarouselSlide(idx){
+      const slide = idx >= 0 ? _carouselData[idx] : { title: "", description: "", image: "", link: "" };
+      const title = prompt("轮播标题:", slide.title || "");
+      if(title === null) return;
+      const image = prompt("图片 URL:", slide.image || "");
+      if(image === null) return;
+      const description = prompt("描述（可选）:", slide.description || "");
+      if(description === null) return;
+      const link = prompt("链接 URL（可选）:", slide.link || "");
+      if(link === null) return;
+      
+      const newSlide = { title, description, image, link };
+      if(idx >= 0){
+        _carouselData[idx] = newSlide;
+      } else {
+        _carouselData.push(newSlide);
+      }
+      saveCarousel();
+    }
+    
+    async function saveCarousel(){
+      try{
+        await call("updateCarousel", { carousel: _carouselData });
+        toast("轮播已保存");
+        renderCarousel();
+      }catch(e){ toast(e.error || "保存失败"); }
+    }
+
+    // ═══════════════════════════════════════════
+    // Featured Content Management
+    // ═══════════════════════════════════════════
+    async function loadFeaturedContent(){
+      try{
+        const j = await call("getFeaturedContent");
+        const f = j.featured || {};
+        $("#featuredHot").value = ((f.hot && f.hot.items) || []).join(", ");
+        $("#featuredNew").value = ((f.new && f.new.items) || []).join(", ");
+        $("#featuredRecommended").value = ((f.recommended && f.recommended.items) || []).join(", ");
+      }catch(e){}
+    }
+    
+    async function saveFeaturedContent(){
+      const hotItems = $("#featuredHot").value.split(",").map(s=>s.trim()).filter(Boolean);
+      const newItems = $("#featuredNew").value.split(",").map(s=>s.trim()).filter(Boolean);
+      const recommendedItems = $("#featuredRecommended").value.split(",").map(s=>s.trim()).filter(Boolean);
+      
+      try{
+        await call("updateFeaturedContent", {
+          featured: { 
+            hot: { enabled: true, title: '🔥 热门爆款', items: hotItems },
+            new: { enabled: true, title: '🆕 新品首发', items: newItems },
+            recommended: { enabled: true, title: '⭐ 精选推荐', items: recommendedItems }
+          }
+        });
+        toast("精选内容已保存");
+      }catch(e){ toast(e.error || "保存失败"); }
+    }
+
     function toast(msg){
       const el = document.createElement("div");
       el.textContent = msg;
@@ -706,7 +1035,15 @@ async function destroyExpired(){
     // SEO 设置
     $("#saveSeoBtn")?.addEventListener("click", ()=>saveSeoSettings().catch(e=>toast(e.message||e.error||"保存失败")));
 
-    // auto refresh
+    // 轮播图管理
+    $("#addCarouselBtn")?.addEventListener("click", ()=>editCarouselSlide(-1));
+    $("#refreshCarouselBtn")?.addEventListener("click", ()=>loadCarousel().catch(e=>toast(e.message||e.error||"刷新失败")));
+
+    // 精选内容管理
+    $("#saveFeaturedBtn")?.addEventListener("click", ()=>saveFeaturedContent().catch(e=>toast(e.message||e.error||"保存失败")));
+
+    // Initialize
+    initSidebarNavigation();
     setAuthedUI(true);
     refreshAll().catch(()=>{ location.href="/XyJoe7/"; });
   </script>

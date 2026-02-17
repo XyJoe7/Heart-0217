@@ -8,6 +8,12 @@
   <link rel="stylesheet" href="/assets/pages.css" />
   <style>
     body{margin:0;display:flex;flex-direction:column;min-height:100vh}
+    
+    /* Topbar Styles */
+    .topbar{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.95);backdrop-filter:saturate(160%) blur(10px);border-bottom:1px solid rgba(0,0,0,.08);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;max-width:1400px;margin:0 auto}
+    .topbar-actions{display:flex;align-items:center;gap:10px;margin-left:auto}
+    
     .admin-layout{display:flex;flex:1;overflow:hidden}
     .admin-sidebar{width:220px;background:rgba(255,255,255,.92);border-right:1px solid rgba(0,0,0,.08);overflow-y:auto;flex-shrink:0}
     .admin-main{flex:1;overflow-y:auto;background:linear-gradient(135deg,var(--bg1),var(--bg2))}
@@ -265,15 +271,28 @@
         <!-- Tests Management Section -->
         <div class="content-section" id="section-tests">
           <section class="card">
-            <div class="row" style="justify-content:space-between">
+            <div class="row" style="justify-content:space-between;margin-bottom:14px">
               <h3 style="margin:0">📝 量表管理</h3>
               <div class="row">
                 <button class="btn btn-primary" id="addTestBtn">新增量表</button>
-                <button class="btn btn-ghost" id="importTestBtn">导入量表</button>
                 <button class="btn btn-ghost" id="downloadTemplateBtn">下载模板</button>
                 <button class="btn btn-ghost" id="refreshTestsBtn">刷新</button>
               </div>
             </div>
+            
+            <div class="row" style="gap:10px;margin-bottom:10px">
+              <label class="small" style="flex:1 1 200px">
+                按分类筛选
+                <select id="testCategoryFilter" class="form-select" style="margin-top:4px">
+                  <option value="">全部分类</option>
+                </select>
+              </label>
+              <label class="small" style="flex:1 1 200px">
+                搜索测试
+                <input id="testSearchInput" placeholder="搜索 ID 或标题..." style="width:100%;margin-top:4px" />
+              </label>
+            </div>
+            
             <div style="overflow:auto;margin-top:10px">
               <table>
                 <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>题数</th><th>预计时间</th><th>操作</th></tr></thead>
@@ -392,7 +411,7 @@
     </main>
   </div>
 
-  <!-- Test Editor Overlay (Global) -->
+  <!-- Test Editor Overlay (JSON-based) -->
   <div id="testEditorOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);overflow-y:auto">
     <div style="max-width:900px;margin:40px auto;padding:20px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
       <div class="row" style="justify-content:space-between">
@@ -400,67 +419,22 @@
         <button class="btn btn-ghost" id="closeEditorBtn">关闭</button>
       </div>
       <div style="margin-top:14px">
-        <div class="row" style="gap:10px">
-          <label class="small" style="flex:1">ID（小写字母/数字/横线）<br/><input id="testId" style="width:100%" placeholder="例: gad7"/></label>
-          <label class="small" style="flex:2">标题<br/><input id="testTitle" style="width:100%" placeholder="例: GAD-7 广泛性焦虑评估"/></label>
-        </div>
-        <div class="row" style="gap:10px;margin-top:10px">
-          <label class="small" style="flex:1">分类<br/>
-            <select id="testCategory" class="form-select">
-              <option value="">请选择分类</option>
-            </select>
+        <p class="small" style="margin:0 0 10px;line-height:1.6">
+          编辑该量表的完整 JSON 数据。修改后点击"保存"即可更新。<br/>
+          包含字段：id, title, category, tags, intro, estimated, mode, rule, questions
+        </p>
+        
+        <div style="margin-top:10px">
+          <label class="small">量表 JSON 数据<br/>
+            <textarea id="testJsonEditor" 
+              style="width:100%;min-height:500px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:12px;font-family:ui-monospace,monospace;font-size:13px;line-height:1.5"
+              placeholder='{"id": "test-id", "title": "测试标题", ...}'></textarea>
           </label>
-          <label class="small" style="flex:1">标签（逗号分隔）<br/><input id="testTags" style="width:100%" placeholder="例: 焦虑,情绪"/></label>
-          <label class="small" style="flex:1">预计时间（分钟）<br/><input id="testEstimated" type="number" style="width:100%" value="10"/></label>
-        </div>
-        <label class="small" style="display:block;margin-top:10px">简介<br/><textarea id="testIntro" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
-        
-        <div style="margin-top:14px">
-          <div class="row" style="justify-content:space-between">
-            <h4 style="margin:0">评分规则</h4>
-            <button class="btn btn-ghost" id="toggleRuleJsonBtn" type="button" style="padding:4px 8px">切换到 JSON</button>
-          </div>
-          
-          <div id="ruleEditorForm" style="margin-top:10px">
-            <div class="row" style="gap:10px">
-              <label class="small" style="flex:1">评分模式<br/>
-                <select id="ruleMode" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px">
-                  <option value="scl90">SCL-90（量表求和）</option>
-                  <option value="mbti">MBTI（维度计分）</option>
-                  <option value="simple">简单求和</option>
-                </select>
-              </label>
-            </div>
-            
-            <div style="margin-top:10px">
-              <label class="small">量表分值（逗号分隔）<br/><input id="ruleScale" style="width:100%" placeholder="例: 0,1,2,3,4"/></label>
-            </div>
-            
-            <div style="margin-top:10px">
-              <label class="small">选项标签（逗号分隔）<br/><input id="ruleLabels" style="width:100%" placeholder="例: 没有,轻微,中等,明显,严重"/></label>
-            </div>
-            
-            <div style="margin-top:10px">
-              <h5 style="margin:0 0 8px">评分区间</h5>
-              <div id="ruleBandsContainer"></div>
-              <button class="btn btn-ghost" id="addBandBtn" type="button" style="margin-top:8px;padding:4px 8px">+ 添加区间</button>
-            </div>
-          </div>
-          
-          <div id="ruleEditorJson" style="display:none;margin-top:10px">
-            <textarea id="testRule" style="width:100%;min-height:120px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace;font-size:12px"></textarea>
-          </div>
         </div>
         
-        <div style="margin-top:14px">
-          <div class="row" style="justify-content:space-between">
-            <h4 style="margin:0">题目列表</h4>
-            <button class="btn btn-ghost" id="addQuestionBtn">+ 添加题目</button>
-          </div>
-          <div id="questionsContainer" style="margin-top:10px;max-height:400px;overflow-y:auto"></div>
-        </div>
-        <div class="row" style="margin-top:14px">
+        <div class="row" style="margin-top:14px;gap:10px">
           <button class="btn btn-primary" id="saveTestBtn">保存量表</button>
+          <button class="btn btn-ghost" id="formatJsonBtn">格式化 JSON</button>
         </div>
       </div>
     </div>
@@ -709,41 +683,84 @@ async function destroyExpired(){
     // ═══════════════════════════════════════════
     let _editingTestId = null;
 
+    let testsData = []; // Store all tests for filtering
+    
     async function loadTests(){
       try{
         const j = await call("listTests");
-        const rows = j.tests.map(t => `
-          <tr>
-            <td class="mono">${t.id}</td>
-            <td>${t.title}</td>
-            <td>${t.category}</td>
-            <td>${t.questionCount}</td>
-            <td>${t.estimated||"-"} 分钟</td>
-            <td class="row">
-              <button class="btn btn-ghost" data-edit-test="${t.id}">编辑</button>
-              <button class="btn btn-ghost" data-export-test="${t.id}">导出</button>
-              <button class="btn btn-ghost" data-del-test="${t.id}" style="border-color:rgba(176,0,32,.25)">删除</button>
-            </td>
-          </tr>
-        `).join("");
-        $("#testsTbody").innerHTML = rows || `<tr><td colspan="6" class="small">暂无量表</td></tr>`;
-
-        document.querySelectorAll("[data-edit-test]").forEach(btn=>{
-          btn.addEventListener("click", ()=> openTestEditor(btn.dataset.editTest));
-        });
-        document.querySelectorAll("[data-export-test]").forEach(btn=>{
-          btn.addEventListener("click", ()=> exportTest(btn.dataset.exportTest));
-        });
-        document.querySelectorAll("[data-del-test]").forEach(btn=>{
-          btn.addEventListener("click", async ()=>{
-            if(!confirm(`确定删除量表 ${btn.dataset.delTest}？`)) return;
-            await call("deleteTest", { id: btn.dataset.delTest });
-            toast("已删除");
-            await loadTests();
-          });
-        });
-      }catch(e){ $("#testsTbody").innerHTML = `<tr><td colspan="6" class="small">加载失败</td></tr>`; }
+        testsData = j.tests || [];
+        
+        // Populate category filter dropdown
+        const categories = [...new Set(testsData.map(t => t.category))].sort();
+        const categoryFilter = $("#testCategoryFilter");
+        if(categoryFilter){
+          const currentValue = categoryFilter.value;
+          categoryFilter.innerHTML = '<option value="">全部分类</option>' + 
+            categories.map(cat => `<option value="${cat}">${cat}</option>`).join("");
+          categoryFilter.value = currentValue; // Restore selection
+        }
+        
+        renderTests();
+      }catch(e){ 
+        $("#testsTbody").innerHTML = `<tr><td colspan="6" class="small">加载失败</td></tr>`; 
+      }
     }
+    
+    function renderTests(){
+      const searchTerm = ($("#testSearchInput")?.value || "").toLowerCase().trim();
+      const categoryFilter = $("#testCategoryFilter")?.value || "";
+      
+      let filtered = testsData;
+      
+      // Apply category filter
+      if(categoryFilter){
+        filtered = filtered.filter(t => t.category === categoryFilter);
+      }
+      
+      // Apply search filter
+      if(searchTerm){
+        filtered = filtered.filter(t => 
+          t.id.toLowerCase().includes(searchTerm) || 
+          t.title.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      const rows = filtered.map(t => `
+        <tr>
+          <td class="mono">${t.id}</td>
+          <td>${t.title}</td>
+          <td>${t.category}</td>
+          <td>${t.questionCount}</td>
+          <td>${t.estimated||"-"} 分钟</td>
+          <td class="row">
+            <button class="btn btn-ghost" data-edit-test="${t.id}">编辑</button>
+            <button class="btn btn-ghost" data-export-test="${t.id}">导出</button>
+            <button class="btn btn-ghost" data-del-test="${t.id}" style="border-color:rgba(176,0,32,.25)">删除</button>
+          </td>
+        </tr>
+      `).join("");
+      
+      $("#testsTbody").innerHTML = rows || `<tr><td colspan="6" class="small">暂无匹配的量表</td></tr>`;
+
+      document.querySelectorAll("[data-edit-test]").forEach(btn=>{
+        btn.addEventListener("click", ()=> openTestEditor(btn.dataset.editTest));
+      });
+      document.querySelectorAll("[data-export-test]").forEach(btn=>{
+        btn.addEventListener("click", ()=> exportTest(btn.dataset.exportTest));
+      });
+      document.querySelectorAll("[data-del-test]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          if(!confirm(`确定删除量表 ${btn.dataset.delTest}？`)) return;
+          await call("deleteTest", { id: btn.dataset.delTest });
+          toast("已删除");
+          await loadTests();
+        });
+      });
+    }
+    
+    // Add event listeners for filtering
+    $("#testCategoryFilter")?.addEventListener("change", renderTests);
+    $("#testSearchInput")?.addEventListener("input", renderTests);
 
     async function exportTest(testId){
       try{
@@ -760,26 +777,6 @@ async function destroyExpired(){
       }catch(e){
         toast(e.error || "导出失败");
       }
-    }
-
-    async function importTest(){
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = '.json';
-      input.onchange = async (e) => {
-        const file = e.target.files[0];
-        if(!file) return;
-        try{
-          const text = await file.text();
-          const testData = JSON.parse(text);
-          const j = await call("importTest", { test: testData });
-          toast(j.updated ? "量表已更新" : "量表已导入");
-          await loadTests();
-        }catch(e){
-          toast(e.error || "导入失败");
-        }
-      };
-      input.click();
     }
 
     async function downloadTemplate(){
@@ -799,272 +796,74 @@ async function destroyExpired(){
       }
     }
 
-    // ═══════════════════════════════════════════
-    // Rule Editor Form Functions
-    // ═══════════════════════════════════════════
-    let _ruleEditorMode = "form"; // "form" or "json"
-    let _currentRule = {};
-    
-    function toggleRuleEditor(){
-      const formDiv = $("#ruleEditorForm");
-      const jsonDiv = $("#ruleEditorJson");
-      const btn = $("#toggleRuleJsonBtn");
-      
-      if(_ruleEditorMode === "form"){
-        // Switch to JSON mode
-        _currentRule = collectRuleFromForm();
-        $("#testRule").value = JSON.stringify(_currentRule, null, 2);
-        formDiv.style.display = "none";
-        jsonDiv.style.display = "block";
-        btn.textContent = "切换到表单";
-        _ruleEditorMode = "json";
-      } else {
-        // Switch to form mode
-        try{
-          _currentRule = JSON.parse($("#testRule").value || "{}");
-          loadRuleToForm(_currentRule);
-          formDiv.style.display = "block";
-          jsonDiv.style.display = "none";
-          btn.textContent = "切换到 JSON";
-          _ruleEditorMode = "form";
-        }catch(e){
-          alert("JSON 格式错误，无法切换到表单模式");
-        }
-      }
-    }
-    
-    function collectRuleFromForm(){
-      const scale = $("#ruleScale").value.split(",").map(v => {
-        const n = Number(v.trim());
-        return isNaN(n) ? v.trim() : n;
-      }).filter(v => v !== "");
-      
-      const labels = $("#ruleLabels").value.split(",").map(v => v.trim()).filter(v => v);
-      
-      const bands = [];
-      document.querySelectorAll(".rule-band").forEach(bandEl => {
-        const min = Number(bandEl.querySelector(".band-min").value || 0);
-        const max = Number(bandEl.querySelector(".band-max").value || 0);
-        const label = bandEl.querySelector(".band-label").value || "";
-        const desc = bandEl.querySelector(".band-desc").value || "";
-        bands.push([min, max, label, desc]);
-      });
-      
-      const mode = $("#ruleMode").value || "simple";
-      
-      return { scale, labels, bands, mode };
-    }
-    
-    function loadRuleToForm(rule){
-      _currentRule = rule || {};
-      
-      $("#ruleMode").value = rule.mode || "simple";
-      $("#ruleScale").value = (rule.scale || []).join(", ");
-      $("#ruleLabels").value = (rule.labels || []).join(", ");
-      
-      renderRuleBands(rule.bands || []);
-    }
-    
-    function renderRuleBands(bands){
-      const container = $("#ruleBandsContainer");
-      container.innerHTML = bands.map((band, idx) => {
-        const [min, max, label, desc] = band;
-        return `
-          <div class="card rule-band" style="margin-bottom:8px;padding:10px">
-            <div class="row" style="gap:8px;align-items:start">
-              <input class="band-min" type="number" value="${min}" style="width:60px" placeholder="最小"/>
-              <span style="line-height:38px">-</span>
-              <input class="band-max" type="number" value="${max}" style="width:60px" placeholder="最大"/>
-              <input class="band-label" value="${escapeAttr(label)}" style="width:80px" placeholder="标签"/>
-              <input class="band-desc" value="${escapeAttr(desc)}" style="flex:1" placeholder="建议描述"/>
-              <button class="btn btn-ghost del-band" data-idx="${idx}" style="padding:4px 8px;border-color:rgba(176,0,32,.25)">删除</button>
-            </div>
-          </div>
-        `;
-      }).join("");
-      
-      // Bind delete buttons
-      container.querySelectorAll(".del-band").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const idx = Number(btn.dataset.idx);
-          const rule = collectRuleFromForm();
-          rule.bands.splice(idx, 1);
-          loadRuleToForm(rule);
-        });
-      });
-    }
-    
-    function addRuleBand(){
-      const rule = collectRuleFromForm();
-      rule.bands.push([0, 10, "低", "建议描述"]);
-      loadRuleToForm(rule);
-    }
-
     async function openTestEditor(testId){
       _editingTestId = testId;
       
-      // Populate category dropdown
-      const categorySelect = $("#testCategory");
-      categorySelect.innerHTML = '<option value="">请选择分类</option>';
-      if (_categoriesData && _categoriesData.length > 0) {
-        _categoriesData.forEach(cat => {
-          const categoryName = cat.name || cat.id || '';
-          // Skip categories without valid names
-          if (!categoryName) return;
-          const option = document.createElement('option');
-          option.value = categoryName;
-          option.textContent = (cat.icon ? cat.icon + ' ' : '') + categoryName;
-          categorySelect.appendChild(option);
-        });
-      }
-      
       if(testId){
+        // Load existing test and show JSON
         const j = await call("getTest", { id: testId });
         const t = j.test;
-        $("#testId").value = t.id || "";
-        $("#testId").disabled = true;
-        $("#testTitle").value = t.title || "";
-        $("#testCategory").value = t.category || "";
-        $("#testTags").value = (t.tags||[]).join(", ");
-        $("#testEstimated").value = t.estimated || 10;
-        $("#testIntro").value = t.intro || "";
-        
-        // Load rule to form
-        _currentRule = t.rule || {};
-        loadRuleToForm(_currentRule);
-        $("#testRule").value = JSON.stringify(_currentRule, null, 2);
-        _ruleEditorMode = "form";
-        $("#ruleEditorForm").style.display = "block";
-        $("#ruleEditorJson").style.display = "none";
-        $("#toggleRuleJsonBtn").textContent = "切换到 JSON";
-        
-        renderQuestionsEditor(t.questions || []);
+        $("#testJsonEditor").value = JSON.stringify(t, null, 2);
         $("#editorTitle").textContent = "编辑量表: " + t.id;
       } else {
-        $("#testId").value = "";
-        $("#testId").disabled = false;
-        $("#testTitle").value = "";
-        $("#testCategory").value = "";
-        $("#testTags").value = "";
-        $("#testEstimated").value = 10;
-        $("#testIntro").value = "";
-        
-        // Load default rule
-        const defaultRule = {
-          scale: [0,1,2,3,4],
-          labels: ["没有","轻微","中等","明显","严重"],
-          bands: [[0,10,"低","建议描述"],[11,22,"中","建议描述"],[23,40,"高","建议描述"]],
-          mode: "simple"
+        // Create new test with template
+        const template = {
+          id: "your-test-id",
+          title: "请输入测试标题",
+          category: "心理测评",
+          tags: ["测试"],
+          intro: "请输入测试简介",
+          estimated: 10,
+          mode: "score",
+          rule: {
+            scale: [0, 1, 2, 3, 4],
+            labels: ["没有", "轻微", "中等", "明显", "严重"],
+            bands: [
+              [0, 10, "低", "分数较低"],
+              [11, 22, "中", "分数中等"],
+              [23, 40, "高", "分数较高"]
+            ],
+            mode: "simple"
+          },
+          questions: [
+            {
+              q: "示例题目？",
+              opts: [
+                { t: "选项1", v: 0 },
+                { t: "选项2", v: 1 },
+                { t: "选项3", v: 2 }
+              ]
+            }
+          ]
         };
-        _currentRule = defaultRule;
-        loadRuleToForm(defaultRule);
-        $("#testRule").value = JSON.stringify(defaultRule, null, 2);
-        _ruleEditorMode = "form";
-        $("#ruleEditorForm").style.display = "block";
-        $("#ruleEditorJson").style.display = "none";
-        $("#toggleRuleJsonBtn").textContent = "切换到 JSON";
-        
-        renderQuestionsEditor([]);
+        $("#testJsonEditor").value = JSON.stringify(template, null, 2);
         $("#editorTitle").textContent = "新增量表";
       }
       $("#testEditorOverlay").style.display = "block";
     }
 
-    function renderQuestionsEditor(questions){
-      const container = $("#questionsContainer");
-      container.innerHTML = questions.map((q, i) => {
-        const opts = (q.opts||[]).map((o,oi)=>`<div class="row" style="gap:4px;margin-top:4px"><input class="q-opt-t" data-qi="${i}" data-oi="${oi}" value="${escapeAttr(o.t||"")}" style="flex:2" placeholder="选项文字"/><input class="q-opt-v" data-qi="${i}" data-oi="${oi}" type="number" value="${o.v||0}" style="flex:1;max-width:60px" placeholder="分值"/><button class="btn btn-ghost q-del-opt" data-qi="${i}" data-oi="${oi}" style="padding:4px 8px">×</button></div>`).join("");
-        return `<div class="card" style="margin-bottom:8px;padding:10px" data-qi="${i}">
-          <div class="row" style="gap:6px">
-            <span class="small" style="min-width:30px">#${i+1}</span>
-            <input class="q-text" data-qi="${i}" value="${escapeAttr(q.q||"")}" style="flex:1" placeholder="题目文本"/>
-            <button class="btn btn-ghost q-del" data-qi="${i}" style="border-color:rgba(176,0,32,.25);padding:4px 8px">删题</button>
-          </div>
-          <div class="q-opts-wrap" data-qi="${i}" style="margin-left:36px">${opts}
-            <button class="btn btn-ghost q-add-opt" data-qi="${i}" style="margin-top:4px;font-size:11px">+ 选项</button>
-          </div>
-        </div>`;
-      }).join("") || `<div class="small">暂无题目，点击"添加题目"开始</div>`;
-      bindQuestionEditorEvents();
-    }
-
-    function escapeAttr(s){ return String(s).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-    function collectTestFromEditor(){
-      const questions = [];
-      document.querySelectorAll("#questionsContainer > .card").forEach(card => {
-        const qi = card.dataset.qi;
-        const q = card.querySelector(`.q-text[data-qi="${qi}"]`)?.value || "";
-        const opts = [];
-        card.querySelectorAll(`.q-opt-t[data-qi="${qi}"]`).forEach(optInput => {
-          const oi = optInput.dataset.oi;
-          const t = optInput.value;
-          const v = Number(card.querySelector(`.q-opt-v[data-qi="${qi}"][data-oi="${oi}"]`)?.value || 0);
-          opts.push({ t, v });
-        });
-        questions.push({ q, opts });
-      });
-
-      let rule = {};
-      if(_ruleEditorMode === "form"){
-        rule = collectRuleFromForm();
-        // Update JSON textarea in case user wants to switch
-        $("#testRule").value = JSON.stringify(rule, null, 2);
-      } else {
-        try { 
-          rule = JSON.parse($("#testRule").value || "{}"); 
-        } catch(e) { 
-          toast("评分规则 JSON 格式错误"); 
-          return null; 
-        }
-      }
-
-      return {
-        id: $("#testId").value.trim(),
-        title: $("#testTitle").value.trim(),
-        category: $("#testCategory").value.trim(),
-        tags: $("#testTags").value.split(",").map(s=>s.trim()).filter(Boolean),
-        intro: $("#testIntro").value.trim(),
-        estimated: Number($("#testEstimated").value) || 10,
-        mode: "score",
-        rule,
-        questions,
-      };
-    }
-
-    function bindQuestionEditorEvents(){
-      document.querySelectorAll(".q-del").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const data = collectTestFromEditor();
-          if(!data) return;
-          data.questions.splice(Number(btn.dataset.qi), 1);
-          renderQuestionsEditor(data.questions);
-        });
-      });
-      document.querySelectorAll(".q-del-opt").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const data = collectTestFromEditor();
-          if(!data) return;
-          data.questions[Number(btn.dataset.qi)].opts.splice(Number(btn.dataset.oi), 1);
-          renderQuestionsEditor(data.questions);
-        });
-      });
-      document.querySelectorAll(".q-add-opt").forEach(btn=>{
-        btn.addEventListener("click", ()=>{
-          const data = collectTestFromEditor();
-          if(!data) return;
-          data.questions[Number(btn.dataset.qi)].opts.push({ t: "", v: 0 });
-          renderQuestionsEditor(data.questions);
-        });
-      });
-    }
-
     async function saveTest(){
-      const data = collectTestFromEditor();
-      if(!data) return;
-      if(!data.id || !data.title){ toast("请填写 ID 和标题"); return; }
-      try{
-        if(_editingTestId){
+      try {
+        const jsonText = $("#testJsonEditor").value.trim();
+        if (!jsonText) {
+          toast("请输入量表 JSON 数据");
+          return;
+        }
+        
+        let data;
+        try {
+          data = JSON.parse(jsonText);
+        } catch (e) {
+          toast("JSON 格式错误：" + e.message);
+          return;
+        }
+        
+        if (!data.id || !data.title) {
+          toast("请确保 JSON 包含 id 和 title 字段");
+          return;
+        }
+        
+        if (_editingTestId) {
           await call("updateTest", { id: _editingTestId, test: data });
           toast("量表已更新");
         } else {
@@ -1073,7 +872,9 @@ async function destroyExpired(){
         }
         $("#testEditorOverlay").style.display = "none";
         await loadTests();
-      }catch(e){ toast(e.error || "保存失败"); }
+      } catch (e) {
+        toast(e.error || "保存失败");
+      }
     }
 
     // ═══════════════════════════════════════════
@@ -1512,18 +1313,23 @@ async function destroyExpired(){
 
     // 量表管理
     $("#addTestBtn")?.addEventListener("click", ()=>openTestEditor(null));
-    $("#importTestBtn")?.addEventListener("click", ()=>importTest());
     $("#downloadTemplateBtn")?.addEventListener("click", ()=>downloadTemplate());
     $("#refreshTestsBtn")?.addEventListener("click", ()=>loadTests().catch(e=>toast(e.message||e.error||"刷新失败")));
     $("#closeEditorBtn")?.addEventListener("click", ()=>{ $("#testEditorOverlay").style.display = "none"; });
     $("#saveTestBtn")?.addEventListener("click", ()=>saveTest().catch(e=>toast(e.message||e.error||"保存失败")));
-    $("#toggleRuleJsonBtn")?.addEventListener("click", ()=>toggleRuleEditor());
-    $("#addBandBtn")?.addEventListener("click", ()=>addRuleBand());
-    $("#addQuestionBtn")?.addEventListener("click", ()=>{
-      const data = collectTestFromEditor();
-      if(!data) return;
-      data.questions.push({ q: "", opts: [{ t: "选项A", v: 0 },{ t: "选项B", v: 1 }] });
-      renderQuestionsEditor(data.questions);
+    $("#formatJsonBtn")?.addEventListener("click", ()=>{
+      try {
+        const jsonText = $("#testJsonEditor").value.trim();
+        if (!jsonText) {
+          toast("请输入 JSON 数据");
+          return;
+        }
+        const data = JSON.parse(jsonText);
+        $("#testJsonEditor").value = JSON.stringify(data, null, 2);
+        toast("JSON 已格式化");
+      } catch (e) {
+        toast("JSON 格式错误：" + e.message);
+      }
     });
 
     // 分销管理

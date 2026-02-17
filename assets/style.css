@@ -475,7 +475,7 @@ button,input{font:inherit}
 .mega-banner .metrics span{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.84)}
 
 
-.site-footer-block{margin:30px calc(50% - 50vw) 0;padding:16px 20px;border-top:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.92);text-align:center;color:var(--muted);font-size:12.5px}
+.site-footer-block{margin-top:30px;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw);margin-bottom:0;padding:16px 20px;border-top:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.92);text-align:center;color:var(--muted);font-size:12.5px}
 .site-footer-block .links{line-height:2;display:flex;flex-wrap:wrap;gap:6px 10px;justify-content:center}
 .site-footer-block .links a{color:var(--primary2);text-decoration:none;font-weight:700;padding:2px 4px}
 .site-footer-block .record{margin-top:6px}

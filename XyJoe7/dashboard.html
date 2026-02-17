@@ -117,6 +117,15 @@
         </svg>
         <span>量表管理</span>
       </a>
+      <a class="menu-item" data-section="categories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>分类管理</span>
+      </a>
       
       <div class="menu-separator"></div>
       <div class="menu-category">系统设置</div>
@@ -244,19 +253,11 @@
         <!-- Featured Content Section -->
         <div class="content-section" id="section-featured">
           <section class="card">
-            <h3 style="margin:0 0 10px">⭐ 精选内容管理</h3>
-            <div class="row" style="gap:14px;margin-top:10px">
-              <label class="small" style="flex:1">热门推荐 ID（逗号分隔）<br/><input id="featuredHot" style="width:100%" placeholder="例: test1,test2,test3"/></label>
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:0">⭐ 精选内容管理</h3>
+              <button class="btn btn-ghost" id="refreshFeaturedBtn">刷新</button>
             </div>
-            <div class="row" style="gap:14px;margin-top:10px">
-              <label class="small" style="flex:1">最新上线 ID（逗号分隔）<br/><input id="featuredNew" style="width:100%" placeholder="例: test4,test5"/></label>
-            </div>
-            <div class="row" style="gap:14px;margin-top:10px">
-              <label class="small" style="flex:1">编辑推荐 ID（逗号分隔）<br/><input id="featuredRecommended" style="width:100%" placeholder="例: test6,test7"/></label>
-            </div>
-            <div class="row" style="margin-top:10px">
-              <button class="btn btn-primary" id="saveFeaturedBtn">保存精选内容</button>
-            </div>
+            <div id="featuredContentList" style="margin-top:14px"></div>
           </section>
         </div>
 
@@ -276,6 +277,20 @@
                 <tbody id="testsTbody"></tbody>
               </table>
             </div>
+          </section>
+        </div>
+
+        <!-- Categories Management Section -->
+        <div class="content-section" id="section-categories">
+          <section class="card">
+            <div class="row" style="justify-content:space-between">
+              <h3 style="margin:0">📁 分类管理</h3>
+              <div class="row">
+                <button class="btn btn-primary" id="addCategoryBtn">新增分类</button>
+                <button class="btn btn-ghost" id="refreshCategoriesBtn">刷新</button>
+              </div>
+            </div>
+            <div id="categoriesList" style="margin-top:14px"></div>
           </section>
         </div>
 
@@ -370,6 +385,15 @@
       </div>
     </main>
   </div>
+
+  <footer class="site-footer-block" style="background:rgba(255,255,255,.88);border-top:1px solid rgba(0,0,0,.06);padding:20px 0;margin-top:0">
+    <div class="links" style="text-align:center;margin-bottom:10px">
+      <a href="/about/" style="margin:0 8px">关于本站</a><a href="/faq/" style="margin:0 8px">常见问题</a><a href="/sitemap-page/" style="margin:0 8px">网站地图</a><a href="/legal/terms/" style="margin:0 8px">用户协议</a><a href="/legal/privacy/" style="margin:0 8px">隐私说明</a>
+    </div>
+    <div class="record" style="text-align:center;font-size:12px;color:var(--muted)">
+      <span id="icpText">ICP备案号待填写</span>
+    </div>
+  </footer>
 
   <!-- Test Editor Overlay (Global) -->
   <div id="testEditorOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);overflow-y:auto">
@@ -501,6 +525,9 @@
       await loadTests();
       await loadReferrers();
       await loadSeoSettings();
+      await loadCarousel();
+      await loadFeaturedContent();
+      await loadCategories();
     }
 
     function statusBadge(c){
@@ -974,30 +1001,240 @@ async function destroyExpired(){
     // ═══════════════════════════════════════════
     // Featured Content Management
     // ═══════════════════════════════════════════
+    let _featuredData = {};
+    let _allTests = [];
+    
     async function loadFeaturedContent(){
       try{
-        const j = await call("getFeaturedContent");
-        const f = j.featured || {};
-        $("#featuredHot").value = ((f.hot && f.hot.items) || []).join(", ");
-        $("#featuredNew").value = ((f.new && f.new.items) || []).join(", ");
-        $("#featuredRecommended").value = ((f.recommended && f.recommended.items) || []).join(", ");
-      }catch(e){}
+        const [featRes, testRes] = await Promise.all([
+          call("getFeaturedContent"),
+          call("listTests")
+        ]);
+        _featuredData = featRes.featured || {
+          hot: { enabled: true, title: '🔥 热门推荐', items: [] },
+          new: { enabled: true, title: '🆕 最新上线', items: [] },
+          recommended: { enabled: true, title: '⭐ 编辑推荐', items: [] }
+        };
+        _allTests = testRes.tests || [];
+        renderFeaturedContent();
+      }catch(e){ 
+        $("#featuredContentList").innerHTML = `<div class="small">加载失败</div>`;
+      }
+    }
+    
+    function renderFeaturedContent(){
+      const list = $("#featuredContentList");
+      const sections = [
+        { key: 'hot', title: '🔥 热门推荐' },
+        { key: 'new', title: '🆕 最新上线' },
+        { key: 'recommended', title: '⭐ 编辑推荐' }
+      ];
+      
+      list.innerHTML = sections.map(sec => {
+        const section = _featuredData[sec.key] || { enabled: true, title: sec.title, items: [] };
+        const itemsHtml = (section.items || []).map((item, idx) => {
+          const itemData = typeof item === 'string' ? { testId: item } : item;
+          const testInfo = _allTests.find(t => t.id === itemData.testId);
+          return `
+            <div class="card" style="margin-bottom:8px;padding:10px">
+              <div class="row" style="justify-content:space-between">
+                <div style="flex:1">
+                  <b>${escapeHtml(itemData.customTitle || (testInfo ? testInfo.title : itemData.testId))}</b>
+                  ${itemData.briefIntro ? `<div class="small">${escapeHtml(itemData.briefIntro)}</div>` : ''}
+                  ${itemData.leadQuestion ? `<div class="small" style="color:var(--accent)">${escapeHtml(itemData.leadQuestion)}</div>` : ''}
+                  ${itemData.testedCount ? `<div class="small">${itemData.testedCount} 人测过</div>` : ''}
+                </div>
+                <div class="row">
+                  <button class="btn btn-ghost" data-edit-featured="${sec.key}-${idx}" style="padding:4px 8px">编辑</button>
+                  <button class="btn btn-ghost" data-del-featured="${sec.key}-${idx}" style="padding:4px 8px;border-color:rgba(176,0,32,.25)">删除</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join("");
+        
+        return `
+          <div class="card" style="margin-bottom:14px">
+            <div class="row" style="justify-content:space-between">
+              <h4 style="margin:0">${sec.title}</h4>
+              <button class="btn btn-ghost" data-add-featured="${sec.key}" style="padding:4px 8px">添加项目</button>
+            </div>
+            <div style="margin-top:10px">
+              ${itemsHtml || '<div class="small">暂无项目</div>'}
+            </div>
+          </div>
+        `;
+      }).join("");
+      
+      // Bind events
+      document.querySelectorAll("[data-add-featured]").forEach(btn => {
+        btn.addEventListener("click", () => editFeaturedItem(btn.dataset.addFeatured, -1));
+      });
+      document.querySelectorAll("[data-edit-featured]").forEach(btn => {
+        const [key, idx] = btn.dataset.editFeatured.split("-");
+        btn.addEventListener("click", () => editFeaturedItem(key, Number(idx)));
+      });
+      document.querySelectorAll("[data-del-featured]").forEach(btn => {
+        const [key, idx] = btn.dataset.delFeatured.split("-");
+        btn.addEventListener("click", async () => {
+          if(!confirm("确定删除此项目？")) return;
+          _featuredData[key].items.splice(Number(idx), 1);
+          await saveFeaturedContent();
+        });
+      });
+    }
+    
+    function editFeaturedItem(sectionKey, idx){
+      const section = _featuredData[sectionKey];
+      const item = idx >= 0 ? section.items[idx] : {};
+      const itemData = typeof item === 'string' ? { testId: item } : item;
+      
+      const testId = prompt("测试项目 ID:", itemData.testId || "");
+      if(testId === null) return;
+      
+      const customTitle = prompt("自定义标题（留空使用默认）:", itemData.customTitle || "");
+      if(customTitle === null) return;
+      
+      const briefIntro = prompt("简易介绍:", itemData.briefIntro || "");
+      if(briefIntro === null) return;
+      
+      const leadQuestion = prompt("引流问题:", itemData.leadQuestion || "");
+      if(leadQuestion === null) return;
+      
+      const testedCount = prompt("测试人数（数字）:", itemData.testedCount || "");
+      if(testedCount === null) return;
+      
+      const image = prompt("图片 URL（留空使用默认）:", itemData.image || "");
+      if(image === null) return;
+      
+      const newItem = {
+        testId,
+        customTitle: customTitle || undefined,
+        briefIntro: briefIntro || undefined,
+        leadQuestion: leadQuestion || undefined,
+        testedCount: testedCount ? Number(testedCount) : undefined,
+        image: image || undefined
+      };
+      
+      // Remove undefined fields
+      Object.keys(newItem).forEach(k => newItem[k] === undefined && delete newItem[k]);
+      
+      if(idx >= 0){
+        section.items[idx] = newItem;
+      } else {
+        section.items.push(newItem);
+      }
+      saveFeaturedContent();
     }
     
     async function saveFeaturedContent(){
-      const hotItems = $("#featuredHot").value.split(",").map(s=>s.trim()).filter(Boolean);
-      const newItems = $("#featuredNew").value.split(",").map(s=>s.trim()).filter(Boolean);
-      const recommendedItems = $("#featuredRecommended").value.split(",").map(s=>s.trim()).filter(Boolean);
-      
       try{
-        await call("updateFeaturedContent", {
-          featured: { 
-            hot: { enabled: true, title: '🔥 热门爆款', items: hotItems },
-            new: { enabled: true, title: '🆕 新品首发', items: newItems },
-            recommended: { enabled: true, title: '⭐ 精选推荐', items: recommendedItems }
-          }
-        });
+        await call("updateFeaturedContent", { featured: _featuredData });
         toast("精选内容已保存");
+        renderFeaturedContent();
+      }catch(e){ toast(e.error || "保存失败"); }
+    }
+
+    // ═══════════════════════════════════════════
+    // Category Management
+    // ═══════════════════════════════════════════
+    let _categoriesData = [];
+    
+    async function loadCategories(){
+      try{
+        const j = await call("getCategories");
+        _categoriesData = j.categories || [];
+        renderCategories();
+      }catch(e){ 
+        $("#categoriesList").innerHTML = `<div class="small">加载失败</div>`;
+      }
+    }
+    
+    function renderCategories(){
+      const list = $("#categoriesList");
+      if(_categoriesData.length === 0){
+        list.innerHTML = `<div class="small">暂无分类，点击"新增分类"开始</div>`;
+        return;
+      }
+      
+      list.innerHTML = _categoriesData.map((cat, idx) => {
+        const escId = escapeHtml(cat.id || "");
+        const escName = escapeHtml(cat.name || "");
+        const escIcon = escapeHtml(cat.icon || "");
+        const escImage = escapeHtml(cat.image || "");
+        return `
+        <div class="card" style="margin-bottom:10px;padding:12px">
+          <div class="row" style="justify-content:space-between;align-items:center">
+            <div class="row" style="align-items:center;gap:12px">
+              ${escImage ? `<img src="${escImage}" alt="${escName}" style="width:60px;height:60px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'"/>` : ''}
+              <div>
+                <div><b>${escIcon} ${escName}</b></div>
+                <div class="small mono">ID: ${escId}</div>
+              </div>
+            </div>
+            <div class="row">
+              <button class="btn btn-ghost" data-edit-category="${idx}" style="padding:4px 8px">编辑</button>
+              <button class="btn btn-ghost" data-del-category="${idx}" style="padding:4px 8px;border-color:rgba(176,0,32,.25)">删除</button>
+            </div>
+          </div>
+        </div>
+      `;
+      }).join("");
+      
+      document.querySelectorAll("[data-edit-category]").forEach(btn=>{
+        btn.addEventListener("click", ()=> editCategory(Number(btn.dataset.editCategory)));
+      });
+      document.querySelectorAll("[data-del-category]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          if(!confirm("确定删除此分类？")) return;
+          _categoriesData.splice(Number(btn.dataset.delCategory), 1);
+          await saveCategories();
+        });
+      });
+    }
+    
+    function editCategory(idx){
+      const cat = idx >= 0 ? _categoriesData[idx] : { id: "", name: "", icon: "", image: "" };
+      
+      let id = cat.id;
+      if(idx < 0){
+        id = prompt("分类 ID（英文，如：emotion）:", id || "");
+        if(id === null) return;
+        if(!id || !/^[a-z0-9_-]+$/.test(id)){
+          alert("ID 格式不正确，只能使用小写字母、数字、下划线和连字符");
+          return;
+        }
+        // Check if ID already exists
+        if(_categoriesData.some(c => c.id === id)){
+          alert("此 ID 已存在");
+          return;
+        }
+      }
+      
+      const name = prompt("分类名称:", cat.name || "");
+      if(name === null) return;
+      
+      const icon = prompt("分类图标（emoji）:", cat.icon || "");
+      if(icon === null) return;
+      
+      const image = prompt("分类图片 URL（可选）:", cat.image || "");
+      if(image === null) return;
+      
+      const newCat = { id, name, icon, image };
+      
+      if(idx >= 0){
+        _categoriesData[idx] = newCat;
+      } else {
+        _categoriesData.push(newCat);
+      }
+      saveCategories();
+    }
+    
+    async function saveCategories(){
+      try{
+        await call("updateCategories", { categories: _categoriesData });
+        toast("分类已保存");
+        renderCategories();
       }catch(e){ toast(e.error || "保存失败"); }
     }
 
@@ -1040,12 +1277,26 @@ async function destroyExpired(){
     $("#refreshCarouselBtn")?.addEventListener("click", ()=>loadCarousel().catch(e=>toast(e.message||e.error||"刷新失败")));
 
     // 精选内容管理
-    $("#saveFeaturedBtn")?.addEventListener("click", ()=>saveFeaturedContent().catch(e=>toast(e.message||e.error||"保存失败")));
+    $("#refreshFeaturedBtn")?.addEventListener("click", ()=>loadFeaturedContent().catch(e=>toast(e.message||e.error||"刷新失败")));
+
+    // 分类管理
+    $("#addCategoryBtn")?.addEventListener("click", ()=>editCategory(-1));
+    $("#refreshCategoriesBtn")?.addEventListener("click", ()=>loadCategories().catch(e=>toast(e.message||e.error||"刷新失败")));
+
+    // Load ICP info for footer
+    async function loadFooterInfo(){
+      try{
+        const r = await fetch('/api/site_public.php');
+        const d = await r.json();
+        if(d.ok && d.icp) document.getElementById('icpText').textContent = d.icp;
+      }catch(e){}
+    }
 
     // Initialize
     initSidebarNavigation();
     setAuthedUI(true);
     refreshAll().catch(()=>{ location.href="/XyJoe7/"; });
+    loadFooterInfo();
   </script>
 </body>
 </html>

@@ -589,6 +589,31 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     return ['ok'=>true];
   }
 
+  // ═══════════════════════════════════════════
+  // 分类管理（Categories Management）
+  // ═══════════════════════════════════════════
+  
+  if ($action === 'getCategories') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $categories = $siteData['categories'] ?? [
+      ['id'=>'emotion','name'=>'情绪量表','icon'=>'😊','image'=>''],
+      ['id'=>'personality','name'=>'人格测试','icon'=>'🎭','image'=>''],
+      ['id'=>'relationship','name'=>'恋爱关系','icon'=>'💕','image'=>''],
+      ['id'=>'career','name'=>'职业天赋','icon'=>'💼','image'=>'']
+    ];
+    return ['ok'=>true,'categories'=>$categories];
+  }
+
+  if ($action === 'updateCategories') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $categories = $in['categories'] ?? [];
+    $siteData['categories'] = $categories;
+    save_json_file_atomic($seoPath, $siteData);
+    return ['ok'=>true];
+  }
+
   return ['ok'=>false,'error'=>'unknown_action'];
 });
 

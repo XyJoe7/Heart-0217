@@ -410,7 +410,8 @@
       var dots=document.getElementById("carouselDots");
       if(!track||!dots)return;
       track.innerHTML=slides.map(function(s){
-        return '<div class="carousel-slide" style="background:'+s.bg+'"><div class="slide-text"><h2>'+escapeHtml(s.title)+'</h2><p>'+escapeHtml(s.sub)+'</p></div></div>';
+        var subtitle = s.sub || s.description || "";
+        return '<div class="carousel-slide" style="background:'+s.bg+'"><div class="slide-text"><h2>'+escapeHtml(s.title)+'</h2><p>'+escapeHtml(subtitle)+'</p></div></div>';
       }).join("");
       dots.innerHTML=slides.map(function(_,i){
         return '<span data-i="'+i+'"'+(i===0?' class="active"':'')+'></span>';

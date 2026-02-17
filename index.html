@@ -470,7 +470,7 @@
         var hotSection = el.parentElement;
         if(hotSection){
           var hotHead = hotSection.querySelector('.sec-head h3');
-          if(hotHead) hotHead.innerHTML = featuredContent.hot.title;
+          if(hotHead) hotHead.textContent = featuredContent.hot.title;
         }
       }
       var hot=getHotTests();
@@ -488,7 +488,7 @@
         var newSection = el.parentElement;
         if(newSection){
           var newHead = newSection.querySelector('.sec-head h3');
-          if(newHead) newHead.innerHTML = featuredContent.new.title;
+          if(newHead) newHead.textContent = featuredContent.new.title;
         }
       }
       var items;
@@ -519,7 +519,7 @@
         var featSection = el.parentElement;
         if(featSection){
           var featHead = featSection.querySelector('.sec-head h3');
-          if(featHead) featHead.innerHTML = featuredContent.recommended.title;
+          if(featHead) featHead.textContent = featuredContent.recommended.title;
         }
       }
       var allItems;

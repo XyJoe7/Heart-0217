@@ -526,9 +526,9 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $seoPath = __DIR__ . '/../data/site.json';
     $siteData = load_json_file($seoPath);
     $carousel = $siteData['carousel'] ?? [
-      ['bg'=>'linear-gradient(135deg,#4facfe,#00f2fe)','title'=>'专业心理测评平台','sub'=>'涵盖情绪、人格、恋爱、职业等多维度心理自测工具'],
-      ['bg'=>'linear-gradient(135deg,#f093fb,#f5576c)','title'=>'恋爱 · 人格 · 情绪','sub'=>'40+ 科学量表，随时随地测评'],
-      ['bg'=>'linear-gradient(135deg,#667eea,#764ba2)','title'=>'了解自己，才能更好前行','sub'=>'结果仅供自我觉察，请对自己保持善意']
+      ['bg'=>'linear-gradient(135deg,#4facfe,#00f2fe)','title'=>'专业心理测评平台','sub'=>'涵盖情绪、人格、恋爱、职业等多维度心理自测','image'=>'','description'=>'涵盖情绪、人格、恋爱、职业等多维度心理自测','link'=>''],
+      ['bg'=>'linear-gradient(135deg,#f093fb,#f5576c)','title'=>'恋爱 · 人格 · 情绪','sub'=>'40+ 科学量表，随时随地测评','image'=>'','description'=>'40+ 科学量表，随时随地测评','link'=>''],
+      ['bg'=>'linear-gradient(135deg,#667eea,#764ba2)','title'=>'了解自己，才能更好前行','sub'=>'结果仅供自我觉察，请对自己保持善意','image'=>'','description'=>'结果仅供自我觉察，请对自己保持善意','link'=>'']
     ];
     return ['ok'=>true,'carousel'=>$carousel];
   }

@@ -388,6 +388,15 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     return ['ok'=>true,'imported'=>$id,'updated'=>$found];
   }
 
+  if ($action === 'getTestTemplate') {
+    $templateFile = __DIR__ . '/../data/test_import_template.json';
+    if (!file_exists($templateFile)) {
+      return ['ok'=>false,'error'=>'template_not_found'];
+    }
+    $template = load_json_file($templateFile);
+    return ['ok'=>true,'template'=>$template];
+  }
+
   // ═══════════════════════════════════════════
   // 分销功能（Referral / Affiliate）
   // ═══════════════════════════════════════════

@@ -270,6 +270,7 @@
               <div class="row">
                 <button class="btn btn-primary" id="addTestBtn">新增量表</button>
                 <button class="btn btn-ghost" id="importTestBtn">导入量表</button>
+                <button class="btn btn-ghost" id="downloadTemplateBtn">下载模板</button>
                 <button class="btn btn-ghost" id="refreshTestsBtn">刷新</button>
               </div>
             </div>
@@ -779,6 +780,23 @@ async function destroyExpired(){
         }
       };
       input.click();
+    }
+
+    async function downloadTemplate(){
+      try{
+        const j = await call("getTestTemplate", {});
+        if(!j.ok) throw new Error(j.error || "获取模板失败");
+        const blob = new Blob([JSON.stringify(j.template, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'test_import_template.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        toast("模板已下载");
+      }catch(e){
+        toast(e.message || e.error || "下载失败");
+      }
     }
 
     // ═══════════════════════════════════════════
@@ -1495,6 +1513,7 @@ async function destroyExpired(){
     // 量表管理
     $("#addTestBtn")?.addEventListener("click", ()=>openTestEditor(null));
     $("#importTestBtn")?.addEventListener("click", ()=>importTest());
+    $("#downloadTemplateBtn")?.addEventListener("click", ()=>downloadTemplate());
     $("#refreshTestsBtn")?.addEventListener("click", ()=>loadTests().catch(e=>toast(e.message||e.error||"刷新失败")));
     $("#closeEditorBtn")?.addEventListener("click", ()=>{ $("#testEditorOverlay").style.display = "none"; });
     $("#saveTestBtn")?.addEventListener("click", ()=>saveTest().catch(e=>toast(e.message||e.error||"保存失败")));

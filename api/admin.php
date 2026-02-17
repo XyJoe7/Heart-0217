@@ -240,12 +240,29 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     $tests = load_json_file($testsFile);
     if (!is_array($tests) || !isset($tests[0])) $tests = [];
     $items = array_map(function($t){
+      // Count base questions
+      $baseQuestions = count($t['questions'] ?? []);
+      
+      // If there are variants, get the max question count from variants
+      $variantQuestions = 0;
+      if (isset($t['variants']) && is_array($t['variants'])) {
+        foreach ($t['variants'] as $v) {
+          $count = count($v['questions'] ?? []);
+          if ($count > $variantQuestions) {
+            $variantQuestions = $count;
+          }
+        }
+      }
+      
+      // Use the higher count (variants or base)
+      $questionCount = max($baseQuestions, $variantQuestions);
+      
       return [
         'id' => $t['id'] ?? '',
         'title' => $t['title'] ?? '',
         'category' => $t['category'] ?? '',
         'tags' => $t['tags'] ?? [],
-        'questionCount' => count($t['questions'] ?? []),
+        'questionCount' => $questionCount,
         'estimated' => $t['estimated'] ?? 0,
       ];
     }, $tests);

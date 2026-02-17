@@ -16,8 +16,14 @@ if (!$data) {
     'about'=>'/about/',
     'faq'=>'/faq/',
     'sitemap'=>'/sitemap-page/',
-    'analyticsCode'=>''
+    'analyticsCode'=>'',
+    'carousel'=>[]
   ];
+} else {
+  // Ensure carousel key exists for existing data
+  if (!isset($data['carousel'])) {
+    $data['carousel'] = [];
+  }
 }
 $freePreview = intval($cfg['FREE_PREVIEW_QUESTIONS'] ?? 3);
 $data['freePreviewQuestions'] = $freePreview;

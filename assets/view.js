@@ -14,6 +14,8 @@ function applyAnalyticsCode(code){
 }
 
 
+let _freePreviewQuestions = 3; // default, will be updated from site settings
+
 async function loadSiteSettings(){
   try{
     const r = await fetch('/api/site_public.php');
@@ -23,6 +25,7 @@ async function loadSiteSettings(){
     if(document.getElementById('brandSub')) document.getElementById('brandSub').textContent = j.settings.siteSub || document.getElementById('brandSub').textContent;
     const icp = document.getElementById('icpText'); if(icp) icp.textContent = j.settings.icp || icp.textContent;
     applyAnalyticsCode(j.settings.analyticsCode || '');
+    if(typeof j.settings.freePreviewQuestions === 'number') _freePreviewQuestions = j.settings.freePreviewQuestions;
   }catch{}
 }
 const SITE = { name:"心象研究所", sub:"测评 · 性格 · 关系 · 职业", miniProgramReserved:true };
@@ -261,6 +264,34 @@ function renderLocked(test){
   $("#panelActions").innerHTML = "";
 }
 
+function renderPaywall(test){
+  const panel = $("#mainPanel");
+  panel.classList.add("locked");
+  $("#panelTitle").textContent = "解锁完整测评";
+  $("#progressText").textContent = "";
+
+  $("#panelBody").innerHTML = `
+    <div class="lock-cta">
+      <div class="cta-card warn" style="border-color:var(--primary)">
+        <h4>🔒 免费预览已结束</h4>
+        <p>你已体验了前 ${_freePreviewQuestions} 道题目，看起来这个测评很适合你！</p>
+        <p>激活后即可完成全部题目并获得专属结果解读，已作答的进度会自动保留。</p>
+        <div class="cta-steps">
+          <div>1）点击"去激活"获取激活码</div>
+          <div>2）激活成功后自动返回本页</div>
+          <div>3）从当前进度继续作答，无需重新开始</div>
+        </div>
+        <div class="row">
+          <a class="btn btn-primary" href="/code?redirect=${buildRedirectParam()}">去激活</a>
+          <a class="btn btn-ghost" href="/">先回测评库看看</a>
+        </div>
+        <div class="small" style="margin-top:10px">激活成功后将自动返回当前测试继续答题。</div>
+      </div>
+    </div>
+  `;
+  $("#panelActions").innerHTML = "";
+}
+
 function renderHome(test){
   const panel = $("#mainPanel");
   panel.classList.remove("locked");
@@ -472,7 +503,16 @@ function startTest(test, resume, variantId){
     });
     $("#nextBtn").addEventListener("click", () => {
       if(answers[index] === null){ toast("请先选择一个选项"); return; }
-      if(index === total-1){ submit(test, answers, { variantId, factorMap, questions }); return; }
+      // 先测试后引导购买：免费预览题数限制
+      if(!isAuthed() && _freePreviewQuestions > 0 && index >= _freePreviewQuestions - 1){
+        renderPaywall(test);
+        return;
+      }
+      if(index === total-1){
+        if(!isAuthed()){ renderPaywall(test); return; }
+        submit(test, answers, { variantId, factorMap, questions });
+        return;
+      }
       index = Math.min(total-1, index+1);
       save();
       renderQ();
@@ -1020,6 +1060,14 @@ function submit(test, answers, ctx){
   renderHistory(test);
   showResult(test, result, false);
   toast("已提交");
+  // 上报测评完成事件
+  try{
+    fetch('/api/track.php', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({eventType:'test_complete',testId:test.id,source:location.search})
+    }).catch(()=>{});
+  }catch{}
 }
 
 function syncAuthedViewUI(){
@@ -1073,7 +1121,12 @@ async function main(){
   wireClearLocal(test);
 
   if(!isAuthed()){
-    renderLocked(test);
+    if(_freePreviewQuestions > 0){
+      // 先测试后引导购买：允许免费预览部分题目
+      renderHome(test);
+    } else {
+      renderLocked(test);
+    }
     return;
   }
   document.body.classList.add("is-authed");

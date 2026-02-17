@@ -23,7 +23,31 @@ async function loadSiteSettings(){
     if(document.getElementById('brandSub')) document.getElementById('brandSub').textContent = j.settings.siteSub || document.getElementById('brandSub').textContent;
     const icp = document.getElementById('icpText'); if(icp) icp.textContent = j.settings.icp || icp.textContent;
     applyAnalyticsCode(j.settings.analyticsCode || '');
+    // SEO meta tags
+    applySeoMeta(j.settings);
   }catch{}
+}
+
+function applySeoMeta(s){
+  if(s.seoTitle && !document.title.includes('测评详情')) document.title = s.seoTitle;
+  const setMeta = (name, content) => {
+    if(!content) return;
+    let el = document.querySelector(`meta[name="${name}"]`);
+    if(!el){ el = document.createElement('meta'); el.name = name; document.head.appendChild(el); }
+    el.setAttribute('content', content);
+  };
+  setMeta('description', s.seoDescription);
+  setMeta('keywords', s.seoKeywords);
+  if(s.ogImage){
+    let og = document.querySelector('meta[property="og:image"]');
+    if(!og){ og = document.createElement('meta'); og.setAttribute('property','og:image'); document.head.appendChild(og); }
+    og.setAttribute('content', s.ogImage);
+  }
+  if(s.canonical){
+    let link = document.querySelector('link[rel="canonical"]');
+    if(!link){ link = document.createElement('link'); link.rel = 'canonical'; document.head.appendChild(link); }
+    link.href = s.canonical + location.pathname;
+  }
 }
 const SITE = { name:"心象研究所", sub:"测评 · 性格 · 关系 · 职业", programBridge:true };
 

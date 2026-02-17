@@ -85,8 +85,8 @@ function renderInfoPanels(test){
       <summary>作答方式 <span class="small">（可折叠）</span></summary>
       <div class="details-b"><ol style="margin:8px 0 0;padding-left:18px">${howto || defaultHowtoById[test.id] || defaultHowtoByCat[test.category] || "<li>请基于近两周的真实体验作答。</li><li>无需追求“正确答案”，越真实越有价值。</li><li>若中途离开可自动保存，返回后继续。</li>"}</ol></div>
     </details>
-    <details class="details">
-      <summary>说明与提醒 <span class="small">（点击展开）</span></summary>
+    <details class="details" open>
+      <summary>说明与提醒 <span class="small">（可折叠）</span></summary>
       <div class="details-b"><ul style="margin:8px 0 0;padding-left:18px">${about || defaultAboutById[test.id] || defaultAboutByCat[test.category] || "<li>结果用于自我觉察，不替代医学诊断。</li><li>若你正处在明显情绪困扰中，请及时寻求专业帮助。</li>"}</ul></div>
     </details>
     ${typesHtml}
@@ -490,7 +490,7 @@ function startTest(test, resume, variantId){
           ${answerStatus}
         </div>
         <div class="small" style="margin-top:16px;color:var(--muted)">
-          ✓ 表示已作答，○ 表示未作答。可点击跳转到之前的题目。
+          ✓ 表示已作答，○ 表示未作答。可点击已作答的题目跳转，未作答的题目需按顺序完成。
         </div>
       </div>
     `;
@@ -506,16 +506,16 @@ function startTest(test, resume, variantId){
     document.querySelectorAll("[data-jump]").forEach(btn => {
       btn.addEventListener("click", () => {
         const targetIndex = Number(btn.dataset.jump);
-        // Only allow jumping backward (not to current or forward)
-        if(targetIndex < index){
+        if(targetIndex === index){
+          // Already on this question, just dismiss progress view
+          renderQ();
+        } else if(answers[targetIndex] !== null || targetIndex < index){
+          // Allow jumping to any answered question or any previous question
           index = targetIndex;
           save();
           renderQ();
-        } else if(targetIndex === index){
-          // Already on this question, just dismiss progress view
-          renderQ();
         } else {
-          toast("请按顺序作答");
+          toast("该题尚未作答，请按顺序完成");
         }
       });
     });
@@ -530,7 +530,7 @@ function startTest(test, resume, variantId){
     const q = questions[index];
 
     // Scroll to question panel when starting or navigating (delay allows DOM update)
-    const SCROLL_DELAY_MS = 100;
+    const SCROLL_DELAY_MS = 200;
     setTimeout(() => {
       const panel = $("#mainPanel");
       if(panel) panel.scrollIntoView({ behavior: "smooth", block: "start" });

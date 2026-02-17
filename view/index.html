@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN" id="top">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>测评详情｜心象研究所</title>
+  <meta name="description" content="查看测评详情、完成答题并获得结果解读。" />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="/view/" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/pages.css" />
+  <script src="../assets/auth.js"></script>
+  <script src="../assets/tests.js"></script>
+  <script src="../assets/view.js" defer></script>
+</head>
+<body>
+  <div class="floating-bubbles" aria-hidden="true" id="bubbles"></div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="返回首页">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="brand-text">
+          <span class="brand-name" id="brandName">心象研究所</span>
+          <span class="brand-sub" id="brandSub">测评 · 性格 · 关系 · 职业</span>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="站点导航">
+        <a class="nav-link" href="/" title="回到列表">首页</a>
+        <a class="nav-link subtle" href="/cooperate">合作</a>
+        <a class="nav-link primary" href="/code" id="authBtn">激活权限</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-wrap">
+      <div class="page-head">
+        <div>
+          <div class="breadcrumb" id="breadcrumb"></div>
+          <h1 class="page-title" id="title">测评</h1>
+          <p class="page-sub" id="intro"></p>
+          <div class="info-chips" id="infoChips"></div>
+        </div>
+        <div style="text-align:right;max-width:min(52vw,360px)">
+          <div class="small" id="authStatus"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section class="panel" id="mainPanel">
+          <div class="panel-h">
+            <h3 id="panelTitle">开始</h3>
+            <div class="small"><span id="progressText"></span></div>
+          </div>
+          <div class="panel-b" id="panelBody"></div>
+          <div class="panel-actions" id="panelActions"></div>
+        </section>
+
+        <aside class="panel" id="sidePanel">
+          <div class="panel-h">
+            <h3>你的记录</h3>
+            <button class="btn btn-ghost" id="clearLocal" type="button">清除本页缓存</button>
+          </div>
+          <div class="panel-b">
+            <div class="small">本页会在浏览器本地保存进度与历史记录，方便中断后继续。</div>
+            <hr class="hr"/>
+            <div class="history" id="history"></div>
+          </div>
+        </aside>
+      </div>
+
+      <div style="margin-top:14px" class="panel">
+        <div class="panel-b">
+          <div class="small">
+            声明：此页面提供的是自我探索与自我觉察工具，结果不构成医疗建议或诊断依据。
+            若你感到持续困扰，请优先寻求专业帮助。
+          </div>
+        </div>
+      </div>
+
+
+      <div class="bottom-banner" id="viewBottomBanner">
+        <button type="button" class="bb-close" id="hideViewBanner" aria-label="关闭提示">×</button>
+        <div><strong>温馨提示：</strong><br/>测评结果可帮助你更好地理解自己，也请对自己保持耐心与善意。</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><a href="/code" id="viewActivateBtn">查看权限状态</a><a href="/">返回测评库</a></div>
+      </div>
+
+    </div>
+
+
+      <footer class="site-footer-block">
+        <div class="links">
+          <a href="/about/">关于本站</a><a href="/faq/">常见问题</a><a href="/sitemap-page/">网站地图</a><a href="/legal/terms/">用户协议</a><a href="/legal/privacy/">隐私说明</a>
+        </div>
+        <div class="record">
+          <span id="icpText">ICP备案号待填写</span>
+        </div>
+      </footer>
+
+</main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

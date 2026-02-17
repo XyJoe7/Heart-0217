@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>XyJoe7 控制台</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/pages.css" />
+  <style>
+    .wrap{max-width:1180px;margin:0 auto;padding:24px 16px}
+    .login-center{display:flex;justify-content:center;margin:8px 0 14px}
+    .login-card{width:min(560px,100%);text-align:center}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px;max-width:1080px;margin:0 auto}
+    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    .card{border-radius:18px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.88);padding:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select{border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px 12px;font-size:14px;outline:none;background:#fff}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid rgba(0,0,0,.08);padding:10px 8px;text-align:left;font-size:13px}
+    th{font-size:12px;color:var(--muted);font-weight:800}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;border:1px solid rgba(0,0,0,.10);font-size:12px;background:rgba(255,255,255,.8)}
+    .danger{color:#b00020}
+    .small{color:var(--muted)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+    .disabled-area{opacity:.58;position:relative;pointer-events:none}
+    .disabled-area::after{content:"登录后可操作";position:absolute;right:12px;top:10px;font-size:12px;color:#7a2f56;background:#fff;border:1px solid rgba(0,0,0,.08);padding:3px 8px;border-radius:999px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="/"><span class="logo">🗝️</span><span>XyJoe7 控制台</span></a>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost" id="logoutBtn">退出</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div id="authTip" class="card" style="margin-bottom:12px">
+      <b>安全提示：</b>你已登录，可在下方管理激活码、站点展示字段与统计代码。
+    </div>
+    <div class="grid" id="adminGrid" style="display:none">
+      <section class="card" id="dashboardCard">
+        <div class="row" style="justify-content:space-between">
+          <div>
+            <h3 style="margin:0 0 6px">激活码列表</h3>
+            <div class="small" id="stats"></div>
+          </div>
+          <div class="row">
+            <input id="q" placeholder="搜索 code..." />
+            <button class="btn btn-ghost" id="refreshBtn">刷新</button>
+          </div>
+        </div>
+
+        <div style="overflow:auto;margin-top:10px">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>状态</th>
+                <th>使用</th>
+                <th>过期</th>
+                <th>激活有效期</th>
+                <th>备注</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="card" id="manageBox">
+        <h3 style="margin:0 0 10px">批量生成激活码</h3>
+        <div class="row" style="gap:14px 10px">
+          <label class="small" style="flex:1 1 120px">数量<br/><input id="count" type="number" min="1" max="500" value="20" style="width:100%"/></label>
+          <label class="small" style="flex:1 1 120px">前缀<br/><input id="prefix" value="H" style="width:100%"/></label>
+          <label class="small" style="flex:1 1 140px">每码可用次数<br/><input id="maxUses" type="number" min="1" value="1" style="width:100%"/></label>
+          <label class="small" style="flex:1 1 140px">激活后有效天数<br/><input id="grantDays" type="number" min="1" value="3" style="width:100%"/></label>
+        </div>
+        <div class="row" style="gap:14px 10px;margin-top:10px">
+          <label class="small" style="flex:1 1 220px">备注（可选）<br/><input id="note" style="width:100%" placeholder="如：2月活动批次"/></label>
+          <label class="small" style="flex:1 1 220px">码本身过期时间（可选）<br/><input id="expiresAt" type="datetime-local" style="width:100%"/></label>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="btn btn-primary" id="createBtn">生成激活码</button>
+          <button class="btn btn-ghost" id="destroyExpiredBtn">清理已过期激活码</button>
+        </div>
+        <div id="createdBox" class="small" style="margin-top:10px"></div>
+      </section>
+      <section class="card" id="siteCard" style="display:none;margin-top:14px">
+      <h3 style="margin:0 0 10px">站点信息设置</h3>
+      <div class="row" style="gap:14px 10px">
+        <label class="small" style="flex:1 1 220px">站点名称<br/><input id="siteName" style="width:100%"/></label>
+        <label class="small" style="flex:1 1 220px">副标题<br/><input id="siteSub" style="width:100%"/></label>
+      </div>
+      <div class="row" style="gap:14px 10px;margin-top:10px">
+        <label class="small" style="flex:1 1 220px">ICP备案号<br/><input id="siteIcp" style="width:100%"/></label>
+        <label class="small" style="flex:1 1 220px">统计代码（可选，支持 script 或纯文本）<br/><textarea id="siteAnalytics" style="width:100%;min-height:88px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn btn-primary" id="saveSiteBtn">保存站点信息</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const API = "/api/admin.php";
+    const stKey = "adminToken";
+    const $ = (s) => document.querySelector(s);
+    const fmt = (ts) => {
+      if(!ts) return "-";
+      const d = new Date(ts*1000);
+      const p = (n)=> String(n).padStart(2,"0");
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    };
+
+    function getToken(){ return localStorage.getItem(stKey) || ""; }
+    function setAuthedUI(ok){
+      const wrap=document.getElementById("adminGrid");
+      const site=document.getElementById("siteCard");
+      const box=document.getElementById("dashboardCard");
+      const tip=document.getElementById("authTip");
+      const manage=document.getElementById("manageBox");
+      if(wrap) wrap.style.display = ok ? "grid" : "none";
+      if(site) site.style.display = ok ? "block" : "none";
+      if(box) box.classList.toggle("disabled-area", !ok);
+      if(manage) manage.classList.toggle("disabled-area", !ok);
+      if(tip) tip.style.display = "none";
+      const logout=document.getElementById("logoutBtn");
+      if(logout) logout.style.display = ok ? "" : "none";
+    }
+    function setToken(t){ if(t) localStorage.setItem(stKey,t); else localStorage.removeItem(stKey); }
+
+    async function call(action, payload={}){
+      const body = { action, ...payload };
+      if(action !== "login") body.adminToken = getToken();
+      const r = await fetch(API, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+      const j = await r.json().catch(()=>({ok:false,error:"bad_json"}));
+      if(!j.ok) throw j;
+      return j;
+    }
+    async function createCodes(){
+      const count = Number($("#count").value||20);
+      const prefix = $("#prefix").value.trim() || "H";
+      const maxUses = Number($("#maxUses").value||1);
+      const grantDays = Number($("#grantDays").value||3);
+      const note = $("#note").value.trim();
+      let expiresAt = 0;
+      const dt = $("#expiresAt").value;
+      if(dt){
+        expiresAt = Math.floor(new Date(dt).getTime()/1000);
+      }
+      const j = await call("createCodes", { count, prefix, maxUses, grantDays, note, expiresAt });
+      $("#createdBox").innerHTML = `<div class="pill">已生成 ${j.created.length} 个</div>
+        <div style="margin-top:8px" class="mono">${j.created.join("<br/>")}</div>`;
+      await refreshAll();
+    }
+
+    async function refreshAll(){
+      if(!getToken()){ location.href="/XyJoe7/"; return; }
+      try{
+        const s = await call("stats");
+        $("#stats").textContent = `总数 ${s.stats.total} · 已停用 ${s.stats.disabled} · 已过期 ${s.stats.expired} · 用尽 ${s.stats.usedUp} · 活跃会话 ${s.stats.activeSessions}`;
+      }catch(e){
+        $("#stats").textContent = "未登录或配置未完成";
+      }
+      await listCodes();
+      await loadSiteSettings();
+    }
+
+    function statusBadge(c){
+      const t = Math.floor(Date.now()/1000);
+      const exp = Number(c.expiresAt||0);
+      const uses = Number(c.uses||0);
+      const max = Number(c.maxUses||1);
+      if(c.disabled) return `<span class="pill danger">停用</span>`;
+      if(exp && exp < t) return `<span class="pill danger">过期</span>`;
+      if(uses >= max) return `<span class="pill">用尽</span>`;
+      return `<span class="pill">可用</span>`;
+    }
+
+    async function listCodes(){
+      const q = $("#q").value.trim();
+      const j = await call("listCodes", { q });
+      const rows = j.codes.map(c => {
+        const exp = c.expiresAt ? fmt(c.expiresAt) : "永不过期";
+        const note = (c.meta && c.meta.note) ? c.meta.note : "-";
+        return `
+          <tr>
+            <td class="mono">${c.code}</td>
+            <td>${statusBadge(c)}</td>
+            <td>${c.uses||0}/${c.maxUses||1}</td>
+            <td>${exp}</td>
+            <td>${c.grantDays||3} 天</td>
+            <td>${note}</td>
+            <td class="row">
+              <button class="btn btn-ghost" data-toggle="${c.code}" data-disabled="${c.disabled?0:1}">${c.disabled?"启用":"停用"}</button>
+              <button class="btn btn-ghost" data-del="${c.code}" style="border-color:rgba(176,0,32,.25)">删除</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      $("#tbody").innerHTML = rows || `<tr><td colspan="7" class="small">暂无数据</td></tr>`;
+
+      document.querySelectorAll("[data-toggle]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const code = btn.getAttribute("data-toggle");
+          const disabled = Number(btn.getAttribute("data-disabled")) === 1;
+          await call("toggleCode", { code, disabled });
+          await refreshAll();
+        });
+      });
+      document.querySelectorAll("[data-del]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const code = btn.getAttribute("data-del");
+          if(!confirm(`确定删除并销毁会话？\n${code}`)) return;
+          await call("deleteCode", { code });
+          await refreshAll();
+        });
+      });
+    }
+
+    async function loadSiteSettings(){
+      const j = await call("getSiteSettings");
+      $("#siteName").value = j.settings.siteName || "";
+      $("#siteSub").value = j.settings.siteSub || "";
+      $("#siteIcp").value = j.settings.icp || "";
+      $("#siteAnalytics").value = j.settings.analyticsCode || "";
+    }
+
+    async function saveSiteSettings(){
+      await call("updateSiteSettings", {
+        siteName: $("#siteName").value,
+        siteSub: $("#siteSub").value,
+        icp: $("#siteIcp").value,
+        analyticsCode: $("#siteAnalytics").value
+      });
+      toast("站点信息已保存");
+    }
+
+async function destroyExpired(){
+      const j = await call("destroyExpired");
+      toast(`已销毁 ${j.removed} 个过期码`);
+      await refreshAll();
+    }
+
+    function toast(msg){
+      const el = document.createElement("div");
+      el.textContent = msg;
+      el.style.cssText = "position:fixed;left:50%;top:18px;transform:translateX(-50%);z-index:9999;background:rgba(10,10,10,.85);color:#fff;padding:10px 12px;border-radius:12px;font-size:13px;max-width:92vw";
+      document.body.appendChild(el);
+      setTimeout(()=>{ el.remove(); }, 1800);
+    }
+
+    $("#createBtn")?.addEventListener("click", ()=>createCodes().catch(e=>toast(e.message||e.error||"生成失败")));
+    $("#refreshBtn")?.addEventListener("click", ()=>refreshAll().catch(e=>toast(e.message||e.error||"刷新失败")));
+    $("#destroyExpiredBtn")?.addEventListener("click", ()=>destroyExpired().catch(e=>toast(e.message||e.error||"操作失败")));
+    $("#saveSiteBtn")?.addEventListener("click", ()=>saveSiteSettings().catch(e=>toast(e.message||e.error||"保存失败")));
+    $("#logoutBtn")?.addEventListener("click", ()=>{
+      setToken(""); location.href="/XyJoe7/"; });
+
+    // auto refresh
+    setAuthedUI(true);
+    refreshAll().catch(()=>{ location.href="/XyJoe7/"; });
+  </script>
+</body>
+</html>

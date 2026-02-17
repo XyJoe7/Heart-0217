@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN" id="top">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>激活权限</title>
+  <meta name="description" content="输入激活码，激活全站测评权限。" />
+  <meta name="robots" content="noindex,follow" />
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/pages.css" />
+  <script src="../assets/auth.js"></script>
+  <script src="../assets/code.js" defer></script>
+</head>
+<body>
+  <div class="floating-bubbles" aria-hidden="true" id="bubbles"></div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="返回首页">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="brand-text">
+          <span class="brand-name" id="brandName">心象研究所</span>
+          <span class="brand-sub" id="brandSub">测评 · 性格 · 关系 · 职业</span>
+        </span>
+      </a>
+
+      <nav class="nav" aria-label="站点导航">
+        <a class="nav-link" href="/">首页</a>
+        <a class="nav-link subtle" href="/cooperate">合作</a>
+        <a class="nav-link primary" href="/view/scl90/" id="backToTest">返回原页面</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-wrap">
+      <div class="page-head">
+        <div>
+          <div class="breadcrumb">
+            <a href="/">全部测试</a> <span aria-hidden="true">/</span> <span>权限管理</span>
+          </div>
+          <h1 class="page-title">激活权限</h1>
+          <p class="page-sub">输入你的激活码以解锁测评。激活信息仅保存在本设备浏览器中，可随时清除。</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <section class="panel">
+          <div class="panel-h">
+            <h3>输入激活码</h3>
+            <div class="small" id="status"></div>
+          </div>
+
+          <div class="panel-b">
+            <div class="question">
+              <p class="q-text">激活码</p>
+              <div class="small" style="margin-top:6px">建议粘贴激活码，系统会自动校正格式。</div><div class="small" id="redirectTip" style="margin-top:6px"></div>
+
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center">
+                <input id="codeInput" type="text" placeholder="例如：H-ABCD-EF23-GHJK-LMNP"
+                  style="flex:1 1 220px;border-radius:999px;border:1px solid rgba(0,0,0,.12);padding:12px 14px;outline:none;background:rgba(255,255,255,.85)" />
+                <button class="btn btn-primary" id="activateBtn" type="button">立即激活</button>
+              </div>
+
+              <div class="result-badges" style="margin-top:12px">
+                <span class="result-badge">一般在购买说明内会标注有效期</span>
+                <span class="result-badge">可随时退出当前设备登录</span>
+                <span class="result-badge">支持跳回原页面</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel-actions">
+            <button class="btn btn-ghost" id="clearBtn" type="button">退出当前设备登录</button>
+            <a class="btn btn-ghost" href="/cooperate">合作 / 代理</a>
+          </div>
+        </section>
+
+        <aside class="panel">
+          <div class="panel-h"><h3>使用说明</h3></div>
+          <div class="panel-b">
+            <div class="small">
+              <b>如何使用</b><br/>
+              - 输入或粘贴激活码后点击“立即激活”。<br/>
+              - 激活成功后你可留在本页查看状态，也可点击“返回上一步”继续。<br/>
+              - 若是公共设备，离开前建议点击“退出当前设备登录”。<br/><br/>
+              <b>温馨提示</b><br/>
+              - 测评结果用于自我觉察，请理性参考。<br/>
+              - 如有持续情绪困扰，请及时寻求专业帮助。
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+      <footer class="site-footer-block">
+        <div class="links">
+          <a href="/about/">关于本站</a><a href="/faq/">常见问题</a><a href="/sitemap-page/">网站地图</a><a href="/legal/terms/">用户协议</a><a href="/legal/privacy/">隐私说明</a>
+        </div>
+        <div class="record">
+          <span id="icpText">ICP备案号待填写</span>
+        </div>
+      </footer>
+
+</main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

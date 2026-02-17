@@ -1,0 +1,9 @@
+{
+    "siteName": "心象研究所",
+    "siteSub": "测评 · 性格 · 关系 · 职业",
+    "icp": "晋ICP备20007065号-1",
+    "about": "\/about\/",
+    "faq": "\/faq\/",
+    "sitemap": "\/sitemap-page\/",
+    "analyticsCode": "<script>\nvar _hmt = _hmt || [];\n(function() {\n  var hm = document.createElement(\"script\");\n  hm.src = \"https:\/\/hm.baidu.com\/hm.js?9e71da9ef22c6ec73dff726a5829e375\";\n  var s = document.getElementsByTagName(\"script\")[0]; \n  s.parentNode.insertBefore(hm, s);\n})();\n<\/script>"
+}

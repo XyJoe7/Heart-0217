@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>XyJoe7 登录</title>
+  <link rel="stylesheet" href="/assets/style.css" />
+  <link rel="stylesheet" href="/assets/pages.css" />
+  <style>
+    .wrap{max-width:680px;margin:0 auto;padding:28px 16px}
+    .card{border-radius:20px;border:1px solid rgba(0,0,0,.08);background:rgba(255,255,255,.92);padding:20px;box-shadow:0 14px 36px rgba(0,0,0,.08)}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input{border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:11px 12px;font-size:15px;outline:none;background:#fff;flex:1}
+    .small{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/"><span class="logo" aria-hidden="true"></span><span class="brand-text"><span class="brand-name">XyJoe7 管理入口</span><span class="brand-sub">仅限管理员</span></span></a>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="card">
+      <h1 style="margin:0 0 10px;font-size:22px">管理员登录</h1>
+      <div class="small" style="margin-bottom:12px">请输入管理员密码后进入控制台。</div>
+      <div class="row">
+        <input id="pwd" type="password" placeholder="管理员密码" />
+        <button class="btn btn-primary" id="loginBtn">登录</button>
+      </div>
+      <div class="small" id="msg" style="margin-top:12px"></div>
+    </section>
+  </main>
+  <script>
+    const API='/api/admin.php';
+    const stKey='adminToken';
+    const $=s=>document.querySelector(s);
+    async function login(){
+      const password = $('#pwd').value.trim();
+      if(!password){ $('#msg').textContent='请输入密码'; return; }
+      const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'login',password})});
+      const j=await r.json().catch(()=>({ok:false,error:'bad_json'}));
+      if(!j.ok){ $('#msg').textContent='登录失败，请检查密码'; return; }
+      localStorage.setItem(stKey,j.adminToken);
+      location.href='/XyJoe7/dashboard.html';
+    }
+    $('#loginBtn').addEventListener('click',login);
+    $('#pwd').addEventListener('keydown',e=>{ if(e.key==='Enter') login(); });
+  </script>
+</body>
+</html>

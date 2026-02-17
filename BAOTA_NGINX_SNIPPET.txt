@@ -1,0 +1,11 @@
+# 建议加入宝塔站点 Nginx 配置的 server{} 内
+# 1) 禁止外网访问 data（存储激活码与会话）
+location ^~ /data/ { deny all; }
+
+# 2) 可选：保护 api/config.php
+location = /api/config.php { deny all; }
+
+# 3) 如果你希望 /view?id=xxx 正常（而不是 /view/index.html?id=xxx）
+#    可打开下列重写（已在前端改为 /view/index.html?id=xxx，因此可不加）
+# location = /view { rewrite ^ /view/index.html last; }
+# location = /view/ { rewrite ^ /view/index.html last; }

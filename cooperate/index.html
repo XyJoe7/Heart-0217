@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>合作 / 代理</title>
+  <link rel="stylesheet" href="../assets/style.css" />
+  <link rel="stylesheet" href="../assets/pages.css" />
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const y = document.getElementById('year');
+      if(y) y.textContent = new Date().getFullYear();
+      const host = document.getElementById('bubbles');
+      if(!host) return;
+      const count = 14;
+      const frag = document.createDocumentFragment();
+      for(let i=0;i<count;i++) {
+        const b = document.createElement('div');
+        b.className = 'bubble';
+        const size = 22 + Math.random()*70;
+        b.style.width = size.toFixed(1)+'px';
+        b.style.height = size.toFixed(1)+'px';
+        b.style.left = (Math.random()*100).toFixed(4)+'%';
+        b.style.animationDelay = (Math.random()*5).toFixed(3)+'s';
+        b.style.animationDuration = (10+Math.random()*10).toFixed(3)+'s';
+        frag.appendChild(b);
+      }
+      host.appendChild(frag);
+    });
+  </script>
+</head>
+<body>
+  <div class="floating-bubbles" aria-hidden="true" id="bubbles"></div>
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="返回首页">
+        <span class="logo" aria-hidden="true"></span>
+        <span class="brand-text">
+          <span class="brand-name">心象研究所</span>
+          <span class="brand-sub">测评 · 性格 · 关系 · 职业</span>
+        </span>
+      </a>
+      <nav class="nav">
+        <a class="nav-link" href="/">首页</a>
+        <a class="nav-link primary" href="/code">激活权限</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="page-wrap">
+      <div class="panel">
+        <div class="panel-h"><h3>合作与陪伴计划</h3></div>
+        <div class="panel-b">
+          <p class="page-sub">如果你希望共同打造温暖、克制、长期主义的心理测评产品，可在此联系合作。</p>
+          <ul class="small" style="line-height:1.8"><li>品牌共建与内容合作</li><li>渠道联运与转化优化</li><li>心理健康公益方向联动</li></ul>
+          <div class="panel-actions" style="padding:14px 0 0;justify-content:flex-start">
+            <a class="btn btn-primary" href="/">回到首页</a>
+            <a class="btn btn-ghost" href="/view/scl90/">看一个测评</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:var(--muted);font-size:12.5px;padding:18px 0 26px">
+        <span>© <span id="year"></span> 心象研究所</span>
+      </div>
+
+    </div>
+
+
+      <footer class="site-footer-block">
+        <div class="links">
+          <a href="/about/">关于本站</a><a href="/faq/">常见问题</a><a href="/sitemap-page/">网站地图</a><a href="/legal/terms/">用户协议</a><a href="/legal/privacy/">隐私说明</a>
+        </div>
+        <div class="record">
+          <span id="icpText">ICP备案号待填写</span>
+        </div>
+      </footer>
+
+</main>
+</body>
+</html>

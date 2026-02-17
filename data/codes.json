@@ -1,0 +1,44 @@
+{
+    "version": 1,
+    "codes": {
+        "H-W9TH-5CRX-L3QQ-LUYQ": {
+            "createdAt": 1770347959,
+            "expiresAt": 0,
+            "maxUses": 1,
+            "uses": 1,
+            "lastUsedAt": 1770347996,
+            "disabled": false,
+            "grantDays": 3,
+            "meta": {
+                "note": "",
+                "scope": "all"
+            }
+        },
+        "H-TXGP-7AHT-GVMD-MH66": {
+            "createdAt": 1770347959,
+            "expiresAt": 0,
+            "maxUses": 1,
+            "uses": 0,
+            "lastUsedAt": 0,
+            "disabled": false,
+            "grantDays": 3,
+            "meta": {
+                "note": "",
+                "scope": "all"
+            }
+        },
+        "H-HEHB-SUXS-AYNN-N5CP": {
+            "createdAt": 1770347959,
+            "expiresAt": 0,
+            "maxUses": 1,
+            "uses": 0,
+            "lastUsedAt": 0,
+            "disabled": false,
+            "grantDays": 3,
+            "meta": {
+                "note": "",
+                "scope": "all"
+            }
+        }
+    }
+}

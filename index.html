@@ -375,7 +375,7 @@
         return '<div class="carousel-slide" style="background:'+s.bg+'"><div class="slide-text"><h2>'+escapeHtml(s.title)+'</h2><p>'+escapeHtml(s.sub)+'</p></div></div>';
       }).join("");
       dots.innerHTML=slides.map(function(_,i){
-        return '<span data-i="'+i+'"'+(i===0?' class="active"':'')+' ></span>';
+        return '<span data-i="'+i+'"'+(i===0?' class="active"':'')+'></span>';
       }).join("");
       dots.addEventListener("click",function(e){
         var sp=e.target.closest("span[data-i]");
@@ -508,7 +508,7 @@
         var btn=e.target.closest("button[data-cat]");
         if(!btn)return;
         setCatFilter(btn.dataset.cat);
-      },{once:false});
+      });
     }
 
     function renderSortBar(){

@@ -47,7 +47,16 @@
   }
 
   async function redeem(code){
-    const res = await postJson(API.redeem, { code: String(code||"").trim() });
+    // Capture UTM parameters and referral code
+    const params = new URLSearchParams(window.location.search);
+    const extra = {};
+    if(params.get('ref')) extra.refCode = params.get('ref');
+    if(params.get('utm_source')) extra.utmSource = params.get('utm_source');
+    if(params.get('utm_medium')) extra.utmMedium = params.get('utm_medium');
+    if(params.get('utm_campaign')) extra.utmCampaign = params.get('utm_campaign');
+    extra.source = document.referrer ? 'referrer' : (extra.refCode ? 'affiliate' : 'direct');
+
+    const res = await postJson(API.redeem, { code: String(code||"").trim(), ...extra });
     if(!res.ok) return res;
     const j = res.data;
     setAuth(j.token, j.expiresAt);

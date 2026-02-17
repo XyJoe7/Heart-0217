@@ -133,3 +133,64 @@ function cleanup_expired_sessions(array &$sessions): int {
   }
   return $n;
 }
+
+/**
+ * Rebuild assets/tests.js from data/tests.json
+ */
+function rebuild_tests_js(string $testsJsonPath): void {
+  $tests = load_json_file($testsJsonPath);
+  if (!is_array($tests) || empty($tests)) return;
+  $json = json_encode($tests, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+  if ($json === false) return;
+  $jsContent = "const TESTS = " . $json . ";\n";
+  $jsPath = dirname($testsJsonPath) . '/../assets/tests.js';
+  $realPath = realpath(dirname($jsPath));
+  if ($realPath === false) return;
+  $target = $realPath . '/tests.js';
+  file_put_contents($target, $jsContent, LOCK_EX);
+}
+
+/**
+ * Rebuild sitemap.xml from tests and site settings
+ */
+function rebuild_sitemap(array $siteData): void {
+  $testsFile = __DIR__ . '/../data/tests.json';
+  $tests = load_json_file($testsFile);
+  if (!is_array($tests) || empty($tests)) return;
+
+  $freq = $siteData['sitemapFreq'] ?? 'weekly';
+  $baseUrl = rtrim($siteData['canonical'] ?? '', '/');
+
+  $urls = [
+    ['loc'=>'/', 'priority'=>'1.0', 'changefreq'=>$freq],
+    ['loc'=>'/code/', 'priority'=>'0.8', 'changefreq'=>'monthly'],
+    ['loc'=>'/build/', 'priority'=>'0.5', 'changefreq'=>'monthly'],
+    ['loc'=>'/cooperate/', 'priority'=>'0.5', 'changefreq'=>'monthly'],
+    ['loc'=>'/about/', 'priority'=>'0.5', 'changefreq'=>'monthly'],
+    ['loc'=>'/faq/', 'priority'=>'0.5', 'changefreq'=>'monthly'],
+    ['loc'=>'/legal/terms/', 'priority'=>'0.3', 'changefreq'=>'yearly'],
+    ['loc'=>'/legal/privacy/', 'priority'=>'0.3', 'changefreq'=>'yearly'],
+    ['loc'=>'/sitemap-page/', 'priority'=>'0.3', 'changefreq'=>'monthly'],
+  ];
+
+  foreach ($tests as $t) {
+    $id = $t['id'] ?? '';
+    if ($id === '') continue;
+    $urls[] = ['loc'=>'/view/' . $id . '/', 'priority'=>'0.7', 'changefreq'=>$freq];
+  }
+
+  $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+  $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+  foreach ($urls as $u) {
+    $loc = $baseUrl . $u['loc'];
+    $xml .= "  <url>\n";
+    $xml .= "    <loc>" . htmlspecialchars($loc, ENT_XML1) . "</loc>\n";
+    $xml .= "    <changefreq>" . $u['changefreq'] . "</changefreq>\n";
+    $xml .= "    <priority>" . $u['priority'] . "</priority>\n";
+    $xml .= "  </url>\n";
+  }
+  $xml .= "</urlset>\n";
+
+  $sitemapPath = __DIR__ . '/../sitemap.xml';
+  file_put_contents($sitemapPath, $xml, LOCK_EX);
+}

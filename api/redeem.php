@@ -10,7 +10,7 @@ $code = trim(strval($in['code'] ?? ''));
 if ($code === '') respond(['ok'=>false,'error'=>'empty_code','message'=>'请输入激活码'], 400);
 
 $lock = __DIR__ . '/../data/.lock';
-$result = with_lock($lock, function() use ($cfg, $code){
+$result = with_lock($lock, function() use ($cfg, $code, $in){
   $codesDb = load_json_file($cfg['CODES_FILE']);
   $sessionsDb = load_json_file($cfg['SESSIONS_FILE']);
   $codes = $codesDb['codes'] ?? [];
@@ -58,13 +58,45 @@ $result = with_lock($lock, function() use ($cfg, $code){
   $uaBind = !empty($cfg['BIND_UA']);
   $uaHash = $uaBind ? ua_hash(ua()) : '';
 
+  // 来源追踪
+  $source = trim(strval($in['source'] ?? 'direct'));
+  $refCode = trim(strval($in['refCode'] ?? ''));
+  $utmSource = trim(strval($in['utmSource'] ?? ''));
+  $utmMedium = trim(strval($in['utmMedium'] ?? ''));
+  $utmCampaign = trim(strval($in['utmCampaign'] ?? ''));
+
   $sessions[$sid] = [
     'code' => $code,
     'issuedAt' => $t,
     'expiresAt' => $sessionExp,
     'ip' => ip(),
     'uaHash' => $uaHash,
+    'source' => $source,
+    'refCode' => $refCode,
+    'utmSource' => $utmSource,
+    'utmMedium' => $utmMedium,
+    'utmCampaign' => $utmCampaign,
   ];
+
+  // 分销记录
+  if ($refCode !== '') {
+    $refFile = __DIR__ . '/../data/referrals.json';
+    $refDb = load_json_file($refFile);
+    $referrers = $refDb['referrers'] ?? [];
+    if (isset($referrers[$refCode]) && empty($referrers[$refCode]['disabled'])) {
+      $referrers[$refCode]['totalOrders'] = intval($referrers[$refCode]['totalOrders'] ?? 0) + 1;
+      $refDb['referrers'] = $referrers;
+      $logs = $refDb['logs'] ?? [];
+      $logs[] = [
+        'refCode' => $refCode,
+        'activationCode' => $code,
+        'time' => $t,
+        'ip' => ip(),
+      ];
+      $refDb['logs'] = $logs;
+      save_json_file_atomic($refFile, $refDb);
+    }
+  }
 
   // 保存
   $codesDb['codes'] = $codes;

@@ -22,4 +22,7 @@ return [
   // 数据文件路径（一般不需要改）
   'CODES_FILE' => __DIR__ . '/../data/codes.json',
   'SESSIONS_FILE' => __DIR__ . '/../data/sessions.json',
+
+  // 先测试后购买：免费预览题数（0 = 需激活后才能答题）
+  'FREE_PREVIEW_QUESTIONS' => 3,
 ];

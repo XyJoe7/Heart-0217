@@ -191,6 +191,359 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     return ['ok'=>true,'removed'=>$removed,'activeSessions'=>count($sessions)];
   }
 
+  // ═══════════════════════════════════════════
+  // 量表编辑（tests CRUD）
+  // ═══════════════════════════════════════════
+
+  $testsFile = __DIR__ . '/../data/tests.json';
+
+  if ($action === 'listTests') {
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    $items = array_map(function($t){
+      return [
+        'id' => $t['id'] ?? '',
+        'title' => $t['title'] ?? '',
+        'category' => $t['category'] ?? '',
+        'tags' => $t['tags'] ?? [],
+        'questionCount' => count($t['questions'] ?? []),
+        'estimated' => $t['estimated'] ?? 0,
+      ];
+    }, $tests);
+    return ['ok'=>true,'tests'=>$items,'total'=>count($items)];
+  }
+
+  if ($action === 'getTest') {
+    $id = trim(strval($in['id'] ?? ''));
+    if ($id === '') return ['ok'=>false,'error'=>'missing_id'];
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    foreach ($tests as $t) {
+      if (($t['id'] ?? '') === $id) return ['ok'=>true,'test'=>$t];
+    }
+    return ['ok'=>false,'error'=>'not_found'];
+  }
+
+  if ($action === 'updateTest') {
+    $id = trim(strval($in['id'] ?? ''));
+    if ($id === '') return ['ok'=>false,'error'=>'missing_id'];
+    $testData = $in['test'] ?? null;
+    if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    $found = false;
+    foreach ($tests as $i => $t) {
+      if (($t['id'] ?? '') === $id) {
+        $testData['id'] = $id; // preserve original ID
+        $tests[$i] = $testData;
+        $found = true;
+        break;
+      }
+    }
+    if (!$found) return ['ok'=>false,'error'=>'not_found'];
+    save_json_file_atomic($testsFile, $tests);
+    rebuild_tests_js($testsFile);
+    return ['ok'=>true];
+  }
+
+  if ($action === 'addTest') {
+    $testData = $in['test'] ?? null;
+    if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
+    $id = trim(strval($testData['id'] ?? ''));
+    if ($id === '' || !preg_match('/^[a-z0-9_-]+$/', $id)) return ['ok'=>false,'error'=>'invalid_id'];
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    foreach ($tests as $t) {
+      if (($t['id'] ?? '') === $id) return ['ok'=>false,'error'=>'id_exists'];
+    }
+    $tests[] = $testData;
+    save_json_file_atomic($testsFile, $tests);
+    rebuild_tests_js($testsFile);
+    return ['ok'=>true];
+  }
+
+  if ($action === 'deleteTest') {
+    $id = trim(strval($in['id'] ?? ''));
+    if ($id === '') return ['ok'=>false,'error'=>'missing_id'];
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    $newTests = array_values(array_filter($tests, function($t) use ($id) {
+      return ($t['id'] ?? '') !== $id;
+    }));
+    if (count($newTests) === count($tests)) return ['ok'=>false,'error'=>'not_found'];
+    save_json_file_atomic($testsFile, $newTests);
+    rebuild_tests_js($testsFile);
+    return ['ok'=>true];
+  }
+
+  // ═══════════════════════════════════════════
+  // 分销功能（Referral / Affiliate）
+  // ═══════════════════════════════════════════
+
+  $refFile = __DIR__ . '/../data/referrals.json';
+
+  if ($action === 'listReferrers') {
+    $refDb = load_json_file($refFile);
+    $referrers = $refDb['referrers'] ?? [];
+    $items = [];
+    foreach ($referrers as $code => $r) {
+      $items[] = array_merge(['code'=>$code], $r);
+    }
+    usort($items, function($a,$b){
+      return intval($b['createdAt'] ?? 0) <=> intval($a['createdAt'] ?? 0);
+    });
+    return ['ok'=>true,'referrers'=>$items];
+  }
+
+  if ($action === 'createReferrer') {
+    $name = trim(strval($in['name'] ?? ''));
+    $commissionPct = intval($in['commissionPct'] ?? 10);
+    if ($name === '') return ['ok'=>false,'error'=>'missing_name'];
+    if ($commissionPct < 0 || $commissionPct > 100) $commissionPct = 10;
+    $refDb = load_json_file($refFile);
+    $referrers = $refDb['referrers'] ?? [];
+    // Generate a short referral code
+    $refCode = 'REF-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8));
+    $referrers[$refCode] = [
+      'name' => $name,
+      'commissionPct' => $commissionPct,
+      'createdAt' => now(),
+      'totalOrders' => 0,
+      'totalRevenue' => 0,
+      'note' => trim(strval($in['note'] ?? '')),
+      'disabled' => false,
+    ];
+    $refDb['referrers'] = $referrers;
+    save_json_file_atomic($refFile, $refDb);
+    return ['ok'=>true,'referralCode'=>$refCode];
+  }
+
+  if ($action === 'toggleReferrer') {
+    $code = trim(strval($in['code'] ?? ''));
+    $disabled = boolval($in['disabled'] ?? false);
+    $refDb = load_json_file($refFile);
+    $referrers = $refDb['referrers'] ?? [];
+    if (!isset($referrers[$code])) return ['ok'=>false,'error'=>'not_found'];
+    $referrers[$code]['disabled'] = $disabled;
+    $refDb['referrers'] = $referrers;
+    save_json_file_atomic($refFile, $refDb);
+    return ['ok'=>true];
+  }
+
+  if ($action === 'deleteReferrer') {
+    $code = trim(strval($in['code'] ?? ''));
+    $refDb = load_json_file($refFile);
+    $referrers = $refDb['referrers'] ?? [];
+    if (!isset($referrers[$code])) return ['ok'=>false,'error'=>'not_found'];
+    unset($referrers[$code]);
+    $refDb['referrers'] = $referrers;
+    save_json_file_atomic($refFile, $refDb);
+    return ['ok'=>true];
+  }
+
+  // ═══════════════════════════════════════════
+  // 运营数据汇总（Analytics Dashboard）
+  // ═══════════════════════════════════════════
+
+  if ($action === 'getAnalytics') {
+    $t = now();
+    $today = strtotime('today');
+    $weekAgo = $t - 7*86400;
+    $monthAgo = $t - 30*86400;
+
+    // Code stats
+    $totalCodes = count($codes);
+    $totalUses = 0;
+    $todayUses = 0;
+    $weekUses = 0;
+    $monthUses = 0;
+    $activeCodes = 0;
+    $sourceStats = [];
+
+    foreach ($codes as $code => $c) {
+      $uses = intval($c['uses'] ?? 0);
+      $totalUses += $uses;
+      $lastUsed = intval($c['lastUsedAt'] ?? 0);
+      if ($lastUsed >= $today) $todayUses += $uses;
+      if ($lastUsed >= $weekAgo) $weekUses += $uses;
+      if ($lastUsed >= $monthAgo) $monthUses += $uses;
+      $exp = intval($c['expiresAt'] ?? 0);
+      $max = intval($c['maxUses'] ?? 1);
+      if (!($c['disabled'] ?? false) && ($exp === 0 || $exp > $t) && $uses < $max) $activeCodes++;
+
+      // Source tracking
+      $source = strval($c['meta']['source'] ?? 'direct');
+      if (!isset($sourceStats[$source])) $sourceStats[$source] = 0;
+      $sourceStats[$source]++;
+    }
+
+    // Session stats
+    $totalSessions = count($sessions);
+    $todaySessions = 0;
+    foreach ($sessions as $s) {
+      $issued = intval($s['issuedAt'] ?? 0);
+      if ($issued >= $today) $todaySessions++;
+    }
+
+    // Referral stats
+    $refDb = load_json_file($refFile);
+    $referrers = $refDb['referrers'] ?? [];
+    $refLogs = $refDb['logs'] ?? [];
+    $totalReferrals = count($refLogs);
+    $todayReferrals = 0;
+    foreach ($refLogs as $log) {
+      if (intval($log['time'] ?? 0) >= $today) $todayReferrals++;
+    }
+
+    // Source distribution from sessions
+    $sessionSources = [];
+    foreach ($sessions as $s) {
+      $src = strval($s['source'] ?? 'direct');
+      if (!isset($sessionSources[$src])) $sessionSources[$src] = 0;
+      $sessionSources[$src]++;
+    }
+
+    // Analytics events
+    $analyticsFile = __DIR__ . '/../data/analytics.json';
+    $analyticsDb = load_json_file($analyticsFile);
+    $events = $analyticsDb['events'] ?? [];
+    $testCompletions = 0;
+    $todayCompletions = 0;
+    $testPopularity = [];
+    foreach ($events as $evt) {
+      if (($evt['type'] ?? '') === 'test_complete') {
+        $testCompletions++;
+        if (intval($evt['time'] ?? 0) >= $today) $todayCompletions++;
+        $tid = $evt['testId'] ?? 'unknown';
+        if (!isset($testPopularity[$tid])) $testPopularity[$tid] = 0;
+        $testPopularity[$tid]++;
+      }
+    }
+    arsort($testPopularity);
+
+    return ['ok'=>true,'analytics'=>[
+      'codes' => [
+        'total'=>$totalCodes, 'active'=>$activeCodes,
+        'totalUses'=>$totalUses, 'todayUses'=>$todayUses,
+        'weekUses'=>$weekUses, 'monthUses'=>$monthUses,
+      ],
+      'sessions' => [
+        'active'=>$totalSessions, 'today'=>$todaySessions,
+      ],
+      'referrals' => [
+        'total'=>$totalReferrals, 'today'=>$todayReferrals,
+        'referrerCount'=>count($referrers),
+      ],
+      'sources' => $sessionSources,
+      'testCompletions' => [
+        'total'=>$testCompletions, 'today'=>$todayCompletions,
+      ],
+      'popularTests' => array_slice($testPopularity, 0, 10, true),
+    ]];
+  }
+
+  // ═══════════════════════════════════════════
+  // 来源追踪（Source Tracking）
+  // ═══════════════════════════════════════════
+
+  if ($action === 'getSourceReport') {
+    $sessionSources = [];
+    $refSources = [];
+    $utmCampaigns = [];
+
+    foreach ($sessions as $sid => $s) {
+      $src = strval($s['source'] ?? 'direct');
+      if (!isset($sessionSources[$src])) $sessionSources[$src] = 0;
+      $sessionSources[$src]++;
+
+      $ref = strval($s['refCode'] ?? '');
+      if ($ref !== '') {
+        if (!isset($refSources[$ref])) $refSources[$ref] = 0;
+        $refSources[$ref]++;
+      }
+
+      $campaign = strval($s['utmCampaign'] ?? '');
+      if ($campaign !== '') {
+        if (!isset($utmCampaigns[$campaign])) $utmCampaigns[$campaign] = 0;
+        $utmCampaigns[$campaign]++;
+      }
+    }
+
+    arsort($sessionSources);
+    arsort($refSources);
+    arsort($utmCampaigns);
+
+    return ['ok'=>true,'sourceReport'=>[
+      'bySource'=>$sessionSources,
+      'byReferral'=>$refSources,
+      'byCampaign'=>$utmCampaigns,
+      'totalSessions'=>count($sessions),
+    ]];
+  }
+
+  // ═══════════════════════════════════════════
+  // SEO 优化设置
+  // ═══════════════════════════════════════════
+
+  if ($action === 'getSeoSettings') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    return ['ok'=>true,'seo'=>[
+      'globalTitle' => $siteData['seoTitle'] ?? ($siteData['siteName'] ?? '心象研究所'),
+      'globalDescription' => $siteData['seoDescription'] ?? '专业心理测评平台，涵盖情绪量表、人格测试、职业天赋、恋爱关系等多种测评工具。',
+      'globalKeywords' => $siteData['seoKeywords'] ?? '心理测评,性格测试,MBTI,SCL-90,职业测试,情绪评估',
+      'ogImage' => $siteData['ogImage'] ?? '',
+      'robotsExtra' => $siteData['robotsExtra'] ?? '',
+      'autoSitemap' => $siteData['autoSitemap'] ?? true,
+      'sitemapFreq' => $siteData['sitemapFreq'] ?? 'weekly',
+      'canonical' => $siteData['canonical'] ?? '',
+    ]];
+  }
+
+  if ($action === 'updateSeoSettings') {
+    $seoPath = __DIR__ . '/../data/site.json';
+    $siteData = load_json_file($seoPath);
+    $siteData['seoTitle'] = trim(strval($in['globalTitle'] ?? $siteData['seoTitle'] ?? ''));
+    $siteData['seoDescription'] = trim(strval($in['globalDescription'] ?? $siteData['seoDescription'] ?? ''));
+    $siteData['seoKeywords'] = trim(strval($in['globalKeywords'] ?? $siteData['seoKeywords'] ?? ''));
+    $siteData['ogImage'] = trim(strval($in['ogImage'] ?? $siteData['ogImage'] ?? ''));
+    $siteData['robotsExtra'] = trim(strval($in['robotsExtra'] ?? $siteData['robotsExtra'] ?? ''));
+    $siteData['autoSitemap'] = boolval($in['autoSitemap'] ?? $siteData['autoSitemap'] ?? true);
+    $siteData['sitemapFreq'] = trim(strval($in['sitemapFreq'] ?? $siteData['sitemapFreq'] ?? 'weekly'));
+    $siteData['canonical'] = trim(strval($in['canonical'] ?? $siteData['canonical'] ?? ''));
+    save_json_file_atomic($seoPath, $siteData);
+
+    // Auto-regenerate sitemap if enabled
+    if ($siteData['autoSitemap']) {
+      rebuild_sitemap($siteData);
+    }
+
+    return ['ok'=>true];
+  }
+
+  // ═══════════════════════════════════════════
+  // 分析事件记录（用于前端上报）
+  // ═══════════════════════════════════════════
+
+  if ($action === 'recordEvent') {
+    $analyticsFile = __DIR__ . '/../data/analytics.json';
+    $analyticsDb = load_json_file($analyticsFile);
+    $events = $analyticsDb['events'] ?? [];
+    $events[] = [
+      'type' => trim(strval($in['eventType'] ?? 'unknown')),
+      'testId' => trim(strval($in['testId'] ?? '')),
+      'source' => trim(strval($in['source'] ?? '')),
+      'time' => now(),
+    ];
+    // Keep only last 10000 events
+    if (count($events) > 10000) {
+      $events = array_slice($events, -10000);
+    }
+    $analyticsDb['events'] = $events;
+    save_json_file_atomic($analyticsFile, $analyticsDb);
+    return ['ok'=>true];
+  }
+
   return ['ok'=>false,'error'=>'unknown_action'];
 });
 

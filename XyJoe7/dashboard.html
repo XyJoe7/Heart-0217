@@ -390,15 +390,6 @@
     </main>
   </div>
 
-  <footer class="site-footer-block" style="background:rgba(255,255,255,.88);border-top:1px solid rgba(0,0,0,.06);padding:20px 0;margin-top:0">
-    <div class="links" style="text-align:center;margin-bottom:10px">
-      <a href="/about/" style="margin:0 8px">关于本站</a><a href="/faq/" style="margin:0 8px">常见问题</a><a href="/sitemap-page/" style="margin:0 8px">网站地图</a><a href="/legal/terms/" style="margin:0 8px">用户协议</a><a href="/legal/privacy/" style="margin:0 8px">隐私说明</a>
-    </div>
-    <div class="record" style="text-align:center;font-size:12px;color:var(--muted)">
-      <span id="icpText">ICP备案号待填写</span>
-    </div>
-  </footer>
-
   <!-- Test Editor Overlay (Global) -->
   <div id="testEditorOverlay" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);overflow-y:auto">
     <div style="max-width:900px;margin:40px auto;padding:20px;background:#fff;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.2)">
@@ -412,7 +403,11 @@
           <label class="small" style="flex:2">标题<br/><input id="testTitle" style="width:100%" placeholder="例: GAD-7 广泛性焦虑评估"/></label>
         </div>
         <div class="row" style="gap:10px;margin-top:10px">
-          <label class="small" style="flex:1">分类<br/><input id="testCategory" style="width:100%" placeholder="例: 情绪量表"/></label>
+          <label class="small" style="flex:1">分类<br/>
+            <select id="testCategory" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;background:#fff">
+              <option value="">请选择分类</option>
+            </select>
+          </label>
           <label class="small" style="flex:1">标签（逗号分隔）<br/><input id="testTags" style="width:100%" placeholder="例: 焦虑,情绪"/></label>
           <label class="small" style="flex:1">预计时间（分钟）<br/><input id="testEstimated" type="number" style="width:100%" value="10"/></label>
         </div>
@@ -888,6 +883,19 @@ async function destroyExpired(){
 
     async function openTestEditor(testId){
       _editingTestId = testId;
+      
+      // Populate category dropdown
+      const categorySelect = $("#testCategory");
+      categorySelect.innerHTML = '<option value="">请选择分类</option>';
+      if (_categoriesData && _categoriesData.length > 0) {
+        _categoriesData.forEach(cat => {
+          const option = document.createElement('option');
+          option.value = cat.name || cat.id || '';
+          option.textContent = (cat.icon ? cat.icon + ' ' : '') + (cat.name || cat.id || '');
+          categorySelect.appendChild(option);
+        });
+      }
+      
       if(testId){
         const j = await call("getTest", { id: testId });
         const t = j.test;

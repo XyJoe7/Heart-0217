@@ -65,7 +65,7 @@
 .factor .d{color:var(--muted);font-size:12.5px;line-height:1.55;margin-top:6px}
 
 
-.bottom-banner{position:sticky;bottom:0;z-index:8;margin:22px calc(50% - 50vw) 0;padding:12px 20px;border-radius:0;border-top:1px solid rgba(255,107,157,.25);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,240,248,.95));display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -8px 20px rgba(255,107,157,.10)}
+.bottom-banner{position:sticky;bottom:70px;z-index:7;margin:22px calc(50% - 50vw) 0;padding:12px 20px;border-radius:0;border-top:1px solid rgba(255,107,157,.25);background:linear-gradient(135deg,rgba(255,255,255,.96),rgba(255,240,248,.95));display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 -8px 20px rgba(255,107,157,.10)}
 .bottom-banner a{text-decoration:none;background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;font-weight:900;padding:8px 12px;border-radius:999px;white-space:nowrap}
 @media (max-width:560px){.bottom-banner{flex-direction:column;align-items:flex-start}}
 

@@ -276,6 +276,48 @@ $out = with_lock($lock, function() use ($cfg, $in, $action){
     return ['ok'=>true];
   }
 
+  if ($action === 'exportTest') {
+    $id = trim(strval($in['id'] ?? ''));
+    if ($id === '') return ['ok'=>false,'error'=>'missing_id'];
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    foreach ($tests as $t) {
+      if (($t['id'] ?? '') === $id) {
+        // Return the test data as JSON for download
+        return ['ok'=>true,'test'=>$t,'filename'=>$id . '_export.json'];
+      }
+    }
+    return ['ok'=>false,'error'=>'not_found'];
+  }
+
+  if ($action === 'importTest') {
+    $testData = $in['test'] ?? null;
+    if (!is_array($testData)) return ['ok'=>false,'error'=>'invalid_test_data'];
+    $id = trim(strval($testData['id'] ?? ''));
+    if ($id === '' || !preg_match('/^[a-z0-9_-]+$/', $id)) return ['ok'=>false,'error'=>'invalid_id'];
+    
+    $tests = load_json_file($testsFile);
+    if (!is_array($tests) || !isset($tests[0])) $tests = [];
+    
+    // Check if ID already exists
+    $found = false;
+    foreach ($tests as $i => $t) {
+      if (($t['id'] ?? '') === $id) {
+        $tests[$i] = $testData;
+        $found = true;
+        break;
+      }
+    }
+    
+    if (!$found) {
+      $tests[] = $testData;
+    }
+    
+    save_json_file_atomic($testsFile, $tests);
+    rebuild_tests_js($testsFile);
+    return ['ok'=>true,'imported'=>$id,'updated'=>$found];
+  }
+
   // ═══════════════════════════════════════════
   // 分销功能（Referral / Affiliate）
   // ═══════════════════════════════════════════

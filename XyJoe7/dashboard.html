@@ -268,6 +268,7 @@
               <h3 style="margin:0">📝 量表管理</h3>
               <div class="row">
                 <button class="btn btn-primary" id="addTestBtn">新增量表</button>
+                <button class="btn btn-ghost" id="importTestBtn">导入量表</button>
                 <button class="btn btn-ghost" id="refreshTestsBtn">刷新</button>
               </div>
             </div>
@@ -336,6 +337,9 @@
               <label class="small" style="flex:1 1 160px;display:flex;align-items:center;gap:8px;margin-top:18px">
                 <input type="checkbox" id="seoAutoSitemap" checked/> 自动生成 sitemap.xml
               </label>
+            </div>
+            <div class="row" style="gap:14px 10px;margin-top:10px">
+              <label class="small" style="flex:1">robots.txt 额外规则（可选）<br/><textarea id="seoRobotsExtra" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace" placeholder="例：&#10;Disallow: /private/"></textarea></label>
             </div>
             <div class="row" style="margin-top:10px">
               <button class="btn btn-primary" id="saveSeoBtn">保存 SEO 设置</button>
@@ -683,6 +687,7 @@ async function destroyExpired(){
             <td>${t.estimated||"-"} 分钟</td>
             <td class="row">
               <button class="btn btn-ghost" data-edit-test="${t.id}">编辑</button>
+              <button class="btn btn-ghost" data-export-test="${t.id}">导出</button>
               <button class="btn btn-ghost" data-del-test="${t.id}" style="border-color:rgba(176,0,32,.25)">删除</button>
             </td>
           </tr>
@@ -691,6 +696,9 @@ async function destroyExpired(){
 
         document.querySelectorAll("[data-edit-test]").forEach(btn=>{
           btn.addEventListener("click", ()=> openTestEditor(btn.dataset.editTest));
+        });
+        document.querySelectorAll("[data-export-test]").forEach(btn=>{
+          btn.addEventListener("click", ()=> exportTest(btn.dataset.exportTest));
         });
         document.querySelectorAll("[data-del-test]").forEach(btn=>{
           btn.addEventListener("click", async ()=>{
@@ -701,6 +709,43 @@ async function destroyExpired(){
           });
         });
       }catch(e){ $("#testsTbody").innerHTML = `<tr><td colspan="6" class="small">加载失败</td></tr>`; }
+    }
+
+    async function exportTest(testId){
+      try{
+        const j = await call("exportTest", { id: testId });
+        const dataStr = JSON.stringify(j.test, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = j.filename || (testId + '_export.json');
+        link.click();
+        URL.revokeObjectURL(url);
+        toast("已导出");
+      }catch(e){
+        toast(e.error || "导出失败");
+      }
+    }
+
+    async function importTest(){
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json';
+      input.onchange = async (e) => {
+        const file = e.target.files[0];
+        if(!file) return;
+        try{
+          const text = await file.text();
+          const testData = JSON.parse(text);
+          const j = await call("importTest", { test: testData });
+          toast(j.updated ? "量表已更新" : "量表已导入");
+          await loadTests();
+        }catch(e){
+          toast(e.error || "导入失败");
+        }
+      };
+      input.click();
     }
 
     async function openTestEditor(testId){
@@ -894,6 +939,7 @@ async function destroyExpired(){
         $("#seoCanonical").value = s.canonical || "";
         $("#seoFreq").value = s.sitemapFreq || "weekly";
         $("#seoAutoSitemap").checked = s.autoSitemap !== false;
+        $("#seoRobotsExtra").value = s.robotsExtra || "";
       }catch(e){}
     }
 
@@ -906,6 +952,7 @@ async function destroyExpired(){
         canonical: $("#seoCanonical").value,
         sitemapFreq: $("#seoFreq").value,
         autoSitemap: $("#seoAutoSitemap").checked,
+        robotsExtra: $("#seoRobotsExtra").value,
       });
       toast("SEO 设置已保存");
     }
@@ -1255,6 +1302,7 @@ async function destroyExpired(){
 
     // 量表管理
     $("#addTestBtn")?.addEventListener("click", ()=>openTestEditor(null));
+    $("#importTestBtn")?.addEventListener("click", ()=>importTest());
     $("#refreshTestsBtn")?.addEventListener("click", ()=>loadTests().catch(e=>toast(e.message||e.error||"刷新失败")));
     $("#closeEditorBtn")?.addEventListener("click", ()=>{ $("#testEditorOverlay").style.display = "none"; });
     $("#saveTestBtn")?.addEventListener("click", ()=>saveTest().catch(e=>toast(e.message||e.error||"保存失败")));

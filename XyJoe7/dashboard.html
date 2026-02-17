@@ -417,7 +417,44 @@
           <label class="small" style="flex:1">预计时间（分钟）<br/><input id="testEstimated" type="number" style="width:100%" value="10"/></label>
         </div>
         <label class="small" style="display:block;margin-top:10px">简介<br/><textarea id="testIntro" style="width:100%;min-height:60px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px"></textarea></label>
-        <label class="small" style="display:block;margin-top:10px">评分规则 JSON<br/><textarea id="testRule" style="width:100%;min-height:80px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace;font-size:12px"></textarea></label>
+        
+        <div style="margin-top:14px">
+          <div class="row" style="justify-content:space-between">
+            <h4 style="margin:0">评分规则</h4>
+            <button class="btn btn-ghost" id="toggleRuleJsonBtn" type="button" style="padding:4px 8px">切换到 JSON</button>
+          </div>
+          
+          <div id="ruleEditorForm" style="margin-top:10px">
+            <div class="row" style="gap:10px">
+              <label class="small" style="flex:1">评分模式<br/>
+                <select id="ruleMode" style="width:100%;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px">
+                  <option value="scl90">SCL-90（量表求和）</option>
+                  <option value="mbti">MBTI（维度计分）</option>
+                  <option value="simple">简单求和</option>
+                </select>
+              </label>
+            </div>
+            
+            <div style="margin-top:10px">
+              <label class="small">量表分值（逗号分隔）<br/><input id="ruleScale" style="width:100%" placeholder="例: 0,1,2,3,4"/></label>
+            </div>
+            
+            <div style="margin-top:10px">
+              <label class="small">选项标签（逗号分隔）<br/><input id="ruleLabels" style="width:100%" placeholder="例: 没有,轻微,中等,明显,严重"/></label>
+            </div>
+            
+            <div style="margin-top:10px">
+              <h5 style="margin:0 0 8px">评分区间</h5>
+              <div id="ruleBandsContainer"></div>
+              <button class="btn btn-ghost" id="addBandBtn" type="button" style="margin-top:8px;padding:4px 8px">+ 添加区间</button>
+            </div>
+          </div>
+          
+          <div id="ruleEditorJson" style="display:none;margin-top:10px">
+            <textarea id="testRule" style="width:100%;min-height:120px;border-radius:12px;border:1px solid rgba(0,0,0,.12);padding:10px;font-family:monospace;font-size:12px"></textarea>
+          </div>
+        </div>
+        
         <div style="margin-top:14px">
           <div class="row" style="justify-content:space-between">
             <h4 style="margin:0">题目列表</h4>
@@ -748,6 +785,107 @@ async function destroyExpired(){
       input.click();
     }
 
+    // ═══════════════════════════════════════════
+    // Rule Editor Form Functions
+    // ═══════════════════════════════════════════
+    let _ruleEditorMode = "form"; // "form" or "json"
+    let _currentRule = {};
+    
+    function toggleRuleEditor(){
+      const formDiv = $("#ruleEditorForm");
+      const jsonDiv = $("#ruleEditorJson");
+      const btn = $("#toggleRuleJsonBtn");
+      
+      if(_ruleEditorMode === "form"){
+        // Switch to JSON mode
+        _currentRule = collectRuleFromForm();
+        $("#testRule").value = JSON.stringify(_currentRule, null, 2);
+        formDiv.style.display = "none";
+        jsonDiv.style.display = "block";
+        btn.textContent = "切换到表单";
+        _ruleEditorMode = "json";
+      } else {
+        // Switch to form mode
+        try{
+          _currentRule = JSON.parse($("#testRule").value || "{}");
+          loadRuleToForm(_currentRule);
+          formDiv.style.display = "block";
+          jsonDiv.style.display = "none";
+          btn.textContent = "切换到 JSON";
+          _ruleEditorMode = "form";
+        }catch(e){
+          alert("JSON 格式错误，无法切换到表单模式");
+        }
+      }
+    }
+    
+    function collectRuleFromForm(){
+      const scale = $("#ruleScale").value.split(",").map(v => {
+        const n = Number(v.trim());
+        return isNaN(n) ? v.trim() : n;
+      }).filter(v => v !== "");
+      
+      const labels = $("#ruleLabels").value.split(",").map(v => v.trim()).filter(v => v);
+      
+      const bands = [];
+      document.querySelectorAll(".rule-band").forEach(bandEl => {
+        const min = Number(bandEl.querySelector(".band-min").value || 0);
+        const max = Number(bandEl.querySelector(".band-max").value || 0);
+        const label = bandEl.querySelector(".band-label").value || "";
+        const desc = bandEl.querySelector(".band-desc").value || "";
+        bands.push([min, max, label, desc]);
+      });
+      
+      const mode = $("#ruleMode").value || "simple";
+      
+      return { scale, labels, bands, mode };
+    }
+    
+    function loadRuleToForm(rule){
+      _currentRule = rule || {};
+      
+      $("#ruleMode").value = rule.mode || "simple";
+      $("#ruleScale").value = (rule.scale || []).join(", ");
+      $("#ruleLabels").value = (rule.labels || []).join(", ");
+      
+      renderRuleBands(rule.bands || []);
+    }
+    
+    function renderRuleBands(bands){
+      const container = $("#ruleBandsContainer");
+      container.innerHTML = bands.map((band, idx) => {
+        const [min, max, label, desc] = band;
+        return `
+          <div class="card rule-band" style="margin-bottom:8px;padding:10px">
+            <div class="row" style="gap:8px;align-items:start">
+              <input class="band-min" type="number" value="${min}" style="width:60px" placeholder="最小"/>
+              <span style="line-height:38px">-</span>
+              <input class="band-max" type="number" value="${max}" style="width:60px" placeholder="最大"/>
+              <input class="band-label" value="${escapeAttr(label)}" style="width:80px" placeholder="标签"/>
+              <input class="band-desc" value="${escapeAttr(desc)}" style="flex:1" placeholder="建议描述"/>
+              <button class="btn btn-ghost del-band" data-idx="${idx}" style="padding:4px 8px;border-color:rgba(176,0,32,.25)">删除</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+      
+      // Bind delete buttons
+      container.querySelectorAll(".del-band").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const idx = Number(btn.dataset.idx);
+          const rule = collectRuleFromForm();
+          rule.bands.splice(idx, 1);
+          loadRuleToForm(rule);
+        });
+      });
+    }
+    
+    function addRuleBand(){
+      const rule = collectRuleFromForm();
+      rule.bands.push([0, 10, "低", "建议描述"]);
+      loadRuleToForm(rule);
+    }
+
     async function openTestEditor(testId){
       _editingTestId = testId;
       if(testId){
@@ -760,7 +898,16 @@ async function destroyExpired(){
         $("#testTags").value = (t.tags||[]).join(", ");
         $("#testEstimated").value = t.estimated || 10;
         $("#testIntro").value = t.intro || "";
-        $("#testRule").value = JSON.stringify(t.rule||{}, null, 2);
+        
+        // Load rule to form
+        _currentRule = t.rule || {};
+        loadRuleToForm(_currentRule);
+        $("#testRule").value = JSON.stringify(_currentRule, null, 2);
+        _ruleEditorMode = "form";
+        $("#ruleEditorForm").style.display = "block";
+        $("#ruleEditorJson").style.display = "none";
+        $("#toggleRuleJsonBtn").textContent = "切换到 JSON";
+        
         renderQuestionsEditor(t.questions || []);
         $("#editorTitle").textContent = "编辑量表: " + t.id;
       } else {
@@ -771,7 +918,22 @@ async function destroyExpired(){
         $("#testTags").value = "";
         $("#testEstimated").value = 10;
         $("#testIntro").value = "";
-        $("#testRule").value = '{"scale":[0,1,2,3,4],"labels":["没有","轻微","中等","明显","严重"],"bands":[[0,10,"低","建议描述"],[11,22,"中","建议描述"],[23,40,"高","建议描述"]]}';
+        
+        // Load default rule
+        const defaultRule = {
+          scale: [0,1,2,3,4],
+          labels: ["没有","轻微","中等","明显","严重"],
+          bands: [[0,10,"低","建议描述"],[11,22,"中","建议描述"],[23,40,"高","建议描述"]],
+          mode: "simple"
+        };
+        _currentRule = defaultRule;
+        loadRuleToForm(defaultRule);
+        $("#testRule").value = JSON.stringify(defaultRule, null, 2);
+        _ruleEditorMode = "form";
+        $("#ruleEditorForm").style.display = "block";
+        $("#ruleEditorJson").style.display = "none";
+        $("#toggleRuleJsonBtn").textContent = "切换到 JSON";
+        
         renderQuestionsEditor([]);
         $("#editorTitle").textContent = "新增量表";
       }
@@ -814,7 +976,18 @@ async function destroyExpired(){
       });
 
       let rule = {};
-      try { rule = JSON.parse($("#testRule").value || "{}"); } catch(e) { toast("评分规则 JSON 格式错误"); return null; }
+      if(_ruleEditorMode === "form"){
+        rule = collectRuleFromForm();
+        // Update JSON textarea in case user wants to switch
+        $("#testRule").value = JSON.stringify(rule, null, 2);
+      } else {
+        try { 
+          rule = JSON.parse($("#testRule").value || "{}"); 
+        } catch(e) { 
+          toast("评分规则 JSON 格式错误"); 
+          return null; 
+        }
+      }
 
       return {
         id: $("#testId").value.trim(),
@@ -1306,6 +1479,8 @@ async function destroyExpired(){
     $("#refreshTestsBtn")?.addEventListener("click", ()=>loadTests().catch(e=>toast(e.message||e.error||"刷新失败")));
     $("#closeEditorBtn")?.addEventListener("click", ()=>{ $("#testEditorOverlay").style.display = "none"; });
     $("#saveTestBtn")?.addEventListener("click", ()=>saveTest().catch(e=>toast(e.message||e.error||"保存失败")));
+    $("#toggleRuleJsonBtn")?.addEventListener("click", ()=>toggleRuleEditor());
+    $("#addBandBtn")?.addEventListener("click", ()=>addRuleBand());
     $("#addQuestionBtn")?.addEventListener("click", ()=>{
       const data = collectTestFromEditor();
       if(!data) return;

@@ -485,7 +485,7 @@ function startTest(test, resume, variantId){
           ${answerStatus}
         </div>
         <div class="small" style="margin-top:16px;color:var(--muted)">
-          ✓ 表示已作答，○ 表示未作答。仅可跳转到已作答或下一题。
+          ✓ 表示已作答，○ 表示未作答。可点击跳转到已答题目或之前的题目。
         </div>
       </div>
     `;
@@ -501,18 +501,13 @@ function startTest(test, resume, variantId){
     document.querySelectorAll("[data-jump]").forEach(btn => {
       btn.addEventListener("click", () => {
         const targetIndex = Number(btn.dataset.jump);
-        // Only allow jumping to answered questions or the next unanswered question
-        const maxAllowedIndex = answers.findIndex((a, i) => i > index && a === null);
-        const canJump = answers[targetIndex] !== null || 
-                       targetIndex <= index || 
-                       (maxAllowedIndex === -1 ? targetIndex <= total-1 : targetIndex <= maxAllowedIndex);
-        
-        if(canJump || targetIndex <= index){
+        // Allow jumping backward or to any answered question
+        if(targetIndex <= index || answers[targetIndex] !== null){
           index = targetIndex;
           save();
           renderQ();
         } else {
-          toast("请按顺序作答，不可跳过未答题目");
+          toast("请先完成前面的题目");
         }
       });
     });
@@ -568,8 +563,8 @@ function startTest(test, resume, variantId){
 
     $("#panelActions").innerHTML = `
       <button class="btn btn-ghost" id="prevBtn" type="button">上一题</button>
-      <button class="btn btn-ghost" id="progressBtn" type="button">查看进度</button>
       <button class="btn btn-primary" id="nextBtn" type="button">${index === total-1 ? "提交" : "下一题"}</button>
+      <button class="btn btn-ghost" id="progressBtn" type="button" style="margin-left:auto">查看进度</button>
     `;
     $("#prevBtn").disabled = index === 0;
 

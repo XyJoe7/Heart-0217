@@ -1111,7 +1111,12 @@ async function destroyExpired(){
     }
     
     function editCarouselSlide(idx){
-      const slide = idx >= 0 ? _carouselData[idx] : { title: "", description: "", image: "", link: "", bg: "linear-gradient(135deg,#7c83fd,#ff6b9d)" };
+      const rawSlide = idx >= 0 ? _carouselData[idx] : { title: "", description: "", image: "", link: "", bg: "linear-gradient(135deg,#7c83fd,#ff6b9d)" };
+      // Normalize: prefer 'description' field, fall back to legacy 'sub' field
+      const slide = {
+        ...rawSlide,
+        description: rawSlide.description || rawSlide.sub || ""
+      };
       const isEdit = idx >= 0;
       
       // Create inline form in the carousel list
@@ -1125,7 +1130,7 @@ async function destroyExpired(){
             </label>
             <label class="small">
               描述（副标题）
-              <input id="carouselDescription" value="${escapeHtml(slide.description||slide.sub||'')}" style="width:100%;margin-top:4px"/>
+              <input id="carouselDescription" value="${escapeHtml(slide.description||'')}" style="width:100%;margin-top:4px"/>
             </label>
             <label class="small">
               图片 URL（可选，留空则使用渐变背景）
@@ -1185,10 +1190,11 @@ async function destroyExpired(){
       });
       
       $("#saveCarouselForm").addEventListener("click", async () => {
+        const descValue = $("#carouselDescription").value || "";
         const newSlide = {
           title: $("#carouselTitle").value || "",
-          description: $("#carouselDescription").value || "",
-          sub: $("#carouselDescription").value || "", // Backward compatibility
+          description: descValue,
+          sub: descValue, // Legacy field for backward compatibility - TODO: migrate frontend to use 'description'
           image: $("#carouselImage").value || "",
           bg: $("#carouselBg").value || "linear-gradient(135deg,#7c83fd,#ff6b9d)",
           link: $("#carouselLink").value || ""

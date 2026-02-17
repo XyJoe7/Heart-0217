@@ -891,6 +891,8 @@ async function destroyExpired(){
       if (_categoriesData && _categoriesData.length > 0) {
         _categoriesData.forEach(cat => {
           const categoryName = cat.name || cat.id || '';
+          // Skip categories without valid names
+          if (!categoryName) return;
           const option = document.createElement('option');
           option.value = categoryName;
           option.textContent = (cat.icon ? cat.icon + ' ' : '') + categoryName;

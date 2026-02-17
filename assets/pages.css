@@ -95,3 +95,4 @@
 .bottom-nav a svg{width:22px;height:22px}
 .bottom-nav a.active{color:var(--primary)}
 .bottom-nav a.active svg{stroke:var(--primary)}
+.page-with-bottom-nav{padding-bottom:70px}

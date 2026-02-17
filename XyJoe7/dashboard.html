@@ -898,24 +898,31 @@ async function destroyExpired(){
         return;
       }
       
-      list.innerHTML = _carouselData.map((slide, idx) => `
+      list.innerHTML = _carouselData.map((slide, idx) => {
+        const escTitle = escapeHtml(slide.title || "无标题");
+        const escDesc = escapeHtml(slide.description || "");
+        const escLink = escapeHtml(slide.link || "-");
+        const escImage = escapeHtml(slide.image || "");
+        const escAlt = escapeHtml(slide.title || "轮播图");
+        return `
         <div class="card" style="margin-bottom:10px;padding:12px">
           <div class="row" style="gap:10px;align-items:start">
-            <img src="${slide.image}" alt="${slide.title || '轮播图'}" style="width:120px;height:80px;object-fit:cover;border-radius:8px"/>
+            <img src="${escImage}" alt="${escAlt}" style="width:120px;height:80px;object-fit:cover;border-radius:8px" onerror="this.style.display='none'"/>
             <div style="flex:1">
               <div class="row" style="justify-content:space-between">
-                <b>${slide.title || "无标题"}</b>
+                <b>${escTitle}</b>
                 <div class="row">
                   <button class="btn btn-ghost" data-edit-carousel="${idx}" style="padding:4px 8px">编辑</button>
                   <button class="btn btn-ghost" data-del-carousel="${idx}" style="padding:4px 8px;border-color:rgba(176,0,32,.25)">删除</button>
                 </div>
               </div>
-              <div class="small" style="margin-top:4px">${slide.description || ""}</div>
-              <div class="small" style="margin-top:4px">链接: <span class="mono">${slide.link || "-"}</span></div>
+              <div class="small" style="margin-top:4px">${escDesc}</div>
+              <div class="small" style="margin-top:4px">链接: <span class="mono">${escLink}</span></div>
             </div>
           </div>
         </div>
-      `).join("");
+      `;
+      }).join("");
       
       document.querySelectorAll("[data-edit-carousel]").forEach(btn=>{
         btn.addEventListener("click", ()=> editCarouselSlide(Number(btn.dataset.editCarousel)));
@@ -927,6 +934,12 @@ async function destroyExpired(){
           await saveCarousel();
         });
       });
+    }
+    
+    function escapeHtml(str){
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
     }
     
     function editCarouselSlide(idx){

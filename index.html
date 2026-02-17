@@ -465,10 +465,13 @@
     }
     function renderHotRow(){
       var el=document.getElementById("hotRow");if(!el)return;
-      // Update section title if custom
+      // Update section title if custom (find parent section's heading)
       if(featuredContent && featuredContent.hot && featuredContent.hot.title){
-        var hotHead = document.querySelector('.sec-head h3:has(+ *) , .sec-head h3');
-        if(hotHead && hotHead.textContent.includes('热门')) hotHead.textContent = featuredContent.hot.title;
+        var hotSection = el.parentElement;
+        if(hotSection){
+          var hotHead = hotSection.querySelector('.sec-head h3');
+          if(hotHead) hotHead.innerHTML = featuredContent.hot.title;
+        }
       }
       var hot=getHotTests();
       el.innerHTML=hot.map(function(t){
@@ -480,12 +483,13 @@
     /* ══ New Arrivals (last N added or customized) ══ */
     function renderNewGrid(){
       var el=document.getElementById("newGrid");if(!el)return;
-      // Update section title if custom
+      // Update section title if custom (find parent section's heading)
       if(featuredContent && featuredContent.new && featuredContent.new.title){
-        var heads = document.querySelectorAll('.sec-head h3');
-        heads.forEach(function(h){
-          if(h.textContent.includes('新品首发')) h.textContent = featuredContent.new.title;
-        });
+        var newSection = el.parentElement;
+        if(newSection){
+          var newHead = newSection.querySelector('.sec-head h3');
+          if(newHead) newHead.innerHTML = featuredContent.new.title;
+        }
       }
       var items;
       // Check if custom new items are configured
@@ -510,12 +514,13 @@
     var featPage=0;var FEAT_PER=6;
     function renderFeatList(){
       var el=document.getElementById("featList");if(!el)return;
-      // Update section title if custom
+      // Update section title if custom (find parent section's heading)
       if(featuredContent && featuredContent.recommended && featuredContent.recommended.title){
-        var heads = document.querySelectorAll('.sec-head h3');
-        heads.forEach(function(h){
-          if(h.textContent.includes('精选推荐')) h.textContent = featuredContent.recommended.title;
-        });
+        var featSection = el.parentElement;
+        if(featSection){
+          var featHead = featSection.querySelector('.sec-head h3');
+          if(featHead) featHead.innerHTML = featuredContent.recommended.title;
+        }
       }
       var allItems;
       // Check if custom recommended items are configured

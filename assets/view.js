@@ -495,7 +495,7 @@ function startTest(test, resume, variantId){
           ${answerStatus}
         </div>
         <div class="small" style="margin-top:16px;color:var(--muted)">
-          ✓ 表示已作答，○ 表示未作答。可点击已作答的题目跳转，未作答的题目需按顺序完成。
+          ✓ 已作答可跳转，○ 未作答需按序完成。
         </div>
       </div>
     `;
@@ -1401,9 +1401,9 @@ function loadImage(src){
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    setTimeout(() => reject(new Error("timeout")), 5000);
+    const timer = setTimeout(() => reject(new Error("timeout")), 5000);
+    img.onload = () => { clearTimeout(timer); resolve(img); };
+    img.onerror = () => { clearTimeout(timer); reject(new Error("load_error")); };
     img.src = src;
   });
 }
